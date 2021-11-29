@@ -1,9 +1,8 @@
 import httpx
-import base64
 from lxml import etree
 
-from .config import proxies
 from .browser import get_new_page
+from .config import httpx_proxy, browser_proxy
 
 
 class ShindanError(Exception):
@@ -46,16 +45,16 @@ async def post(client: httpx.AsyncClient, url: str, **kwargs):
 async def get_shindan_title(id: int) -> str:
     url = f'https://cn.shindanmaker.com/{id}'
     try:
-        async with httpx.AsyncClient(proxies=proxies) as client:
+        async with httpx.AsyncClient(proxies=httpx_proxy) as client:
             resp = await get(client, url)
             return parse_title(resp.text)
     except:
         return ''
 
 
-async def make_shindan(id: int, name: str) -> str:
+async def make_shindan(id: str, name: str) -> str:
     url = f'https://cn.shindanmaker.com/{id}'
-    async with httpx.AsyncClient(proxies=proxies) as client:
+    async with httpx.AsyncClient(proxies=httpx_proxy) as client:
         resp = await get(client, url)
         token = parse_token(resp.text)
         payload = {
@@ -66,7 +65,7 @@ async def make_shindan(id: int, name: str) -> str:
         resp = await post(client, url, json=payload)
     result = parse_result(resp.text)
     image = await create_image(result, wait=2000 if 'chart.js' in result else 0)
-    return f"base64://{base64.b64encode(image).decode()}"
+    return image
 
 
 def parse_title(content: str) -> str:
@@ -114,7 +113,7 @@ def parse_result(content: str) -> str:
 
 async def create_image(html: str, wait: int = 0) -> bytes:
     try:
-        async with get_new_page(viewport={"width": 800, "height": 100}) as page:
+        async with get_new_page(viewport={"width": 800, "height": 100}, proxy=browser_proxy) as page:
             await page.set_content(html, wait_until='networkidle')
             await page.wait_for_timeout(wait)
             img = await page.screenshot(full_page=True)

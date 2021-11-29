@@ -1,14 +1,42 @@
 import json
 from pathlib import Path
 
-data_path = Path() / 'data' / 'shindan'
+data_path = Path() / 'data' / 'shindan' / 'shindan_list.json'
+
+
+default_list = {
+    '162207': {
+        'command': '二次元少女',
+        'title': '你的二次元少女化形象'
+    },
+    '917962': {
+        'command': '人设生成',
+        'title': '人设生成器'
+    },
+    '790697': {
+        'command': '中二称号',
+        'title': '奇妙的中二称号生成器'
+    },
+    '587874': {
+        'command': '异世界转生',
+        'title': '異世界轉生—∩開始的種族∩——'
+    },
+    '1098085': {
+        'command': '特殊能力',
+        'title': '测测你的特殊能力是什么？'
+    },
+    '940824': {
+        'command': '魔法人生',
+        'title': '魔法人生：我在霍格沃兹读书时发生的两三事'
+    }
+}
 
 
 def load_shindan_list() -> dict:
     try:
         return json.load(data_path.open('r', encoding='utf-8'))
     except FileNotFoundError:
-        return {}
+        return default_list
 
 
 _shindan_list = load_shindan_list()
@@ -25,37 +53,24 @@ def dump_shindan_list():
     )
 
 
-def get_shindan_list_all() -> dict:
+def get_shindan_list() -> dict:
     return _shindan_list
 
 
-def get_shindan_list(user_id: str) -> dict:
-    if user_id not in _shindan_list:
-        return {}
-    return _shindan_list[user_id]
-
-
-def add_shindan(user_id: str, id: str, cmd: str, title: str) -> str:
-    user_list = get_shindan_list(user_id)
-    if id in user_list:
+def add_shindan(id: str, cmd: str, title: str) -> str:
+    if id in _shindan_list:
         return False
-    user_list[id] = {
+    _shindan_list[id] = {
         'command': cmd,
         'title': title
     }
-    _shindan_list[user_id] = user_list
     dump_shindan_list()
     return True
 
 
-def del_shindan(user_id: str, id: str) -> str:
-    user_list = get_shindan_list(user_id)
-    if id not in user_list:
+def del_shindan(id: str) -> str:
+    if id not in _shindan_list:
         return False
-    user_list.pop(id)
-    if user_list:
-        _shindan_list[user_id] = user_list
-    else:
-        _shindan_list.pop(user_id)
+    _shindan_list.pop(id)
     dump_shindan_list()
     return True
