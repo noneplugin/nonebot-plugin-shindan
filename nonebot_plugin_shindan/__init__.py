@@ -1,4 +1,5 @@
 from nonebot.rule import Rule
+from nonebot.log import logger
 from nonebot.typing import T_State
 from nonebot.permission import SUPERUSER
 from nonebot import on_command, on_message
@@ -110,10 +111,19 @@ sd_matcher = on_message(sd_handler(), priority=9)
 async def _(bot: Bot, event: Event, state: T_State):
     id = state['id']
     name = state['name']
+    img = None
     try:
         img = await make_shindan(id, name)
-        await sd_matcher.finish(MessageSegment.image(img))
-    except (NetworkError, ParseError):
-        await sd_matcher.finish('网络错误，请检查代理或稍后再试')
+    except NetworkError:
+        logger.warning('网络错误，请检查网络连接或代理设置')
+    except ParseError:
+        logger.warning('网站解析错误，请检查网络或联系插件作者')
     except BrowserError:
-        await sd_matcher.finish('图片生成错误，请检查设置或稍后再试')
+        logger.warning('图片生成错误，请检查网络连接或playwright设置')
+    except Exception as e:
+        logger.warning(f'未知错误：{e}')
+
+    if img:
+        await sd_matcher.finish(MessageSegment.image(img))
+    else:
+        await sd_matcher.finish('出错了，请稍后再试')
