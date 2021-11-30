@@ -39,7 +39,7 @@ async def _(bot: Bot, event: Event, state: T_State):
     if not sd_list:
         await cmd_ls.finish('尚未添加任何占卜')
 
-    await cmd_ls.finish(f'可用占卜：\n' + '\n'.join([f"{s['command']} ({id})" for id, s in sd_list.items()]))
+    await cmd_ls.finish(f'可用占卜：\n' + '\n'.join([f"{s['command']}（{s['title']}）" for s in sd_list.values()]))
 
 
 @cmd_add.handle()
