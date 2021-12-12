@@ -9,9 +9,16 @@ from .shindan_list import add_shindan, del_shindan, get_shindan_list
 from .shindanmaker import make_shindan, get_shindan_title, NetworkError, ParseError, BrowserError
 
 
-__usage__ = """shindanmaker趣味占卜
+__help__plugin_name__ = 'shindan'
+__des__ = 'shindanmaker趣味占卜'
+__cmd__ = '''
 发送“占卜列表”查看可用占卜
-发送“{占卜名} {名字}”使用占卜"""
+发送“{占卜名} {名字}”使用占卜
+'''.strip()
+__example__ = '''
+人设生成 小Q
+'''.strip()
+__usage__ = f'{__des__}\nUsage:\n{__cmd__}\nExample:\n{__example__}'
 
 add_usage = """Usage:
 添加占卜 {id} {指令}
@@ -21,7 +28,7 @@ del_usage = """Usage:
 删除占卜 {id}
 如：删除占卜 917962"""
 
-cmd_sd = on_command('占卜', aliases={'shindan'}, priority=8)
+cmd_sd = on_command('占卜', aliases={'shindan', 'shindanmaker'}, priority=8)
 cmd_ls = on_command('占卜列表', aliases={'可用占卜'}, priority=8)
 cmd_add = on_command('添加占卜', permission=SUPERUSER, priority=8)
 cmd_del = on_command('删除占卜', permission=SUPERUSER, priority=8)

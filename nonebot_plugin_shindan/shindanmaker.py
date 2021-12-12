@@ -52,7 +52,7 @@ async def get_shindan_title(id: int) -> str:
         return ''
 
 
-async def make_shindan(id: str, name: str) -> str:
+async def make_shindan(id: str, name: str) -> bytes:
     url = f'https://cn.shindanmaker.com/{id}'
     async with httpx.AsyncClient(proxies=httpx_proxy) as client:
         resp = await get(client, url)

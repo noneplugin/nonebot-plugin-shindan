@@ -57,7 +57,7 @@ def get_shindan_list() -> dict:
     return _shindan_list
 
 
-def add_shindan(id: str, cmd: str, title: str) -> str:
+def add_shindan(id: str, cmd: str, title: str) -> bool:
     if id in _shindan_list:
         return False
     _shindan_list[id] = {
@@ -68,7 +68,7 @@ def add_shindan(id: str, cmd: str, title: str) -> str:
     return True
 
 
-def del_shindan(id: str) -> str:
+def del_shindan(id: str) -> bool:
     if id not in _shindan_list:
         return False
     _shindan_list.pop(id)
