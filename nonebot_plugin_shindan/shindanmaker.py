@@ -34,12 +34,12 @@ def retry(func):
 
 @retry
 async def get(client: httpx.AsyncClient, url: str, **kwargs):
-    return await client.get(url, **kwargs)
+    return await client.get(url, timeout=20, **kwargs)
 
 
 @retry
 async def post(client: httpx.AsyncClient, url: str, **kwargs):
-    return await client.post(url, **kwargs)
+    return await client.post(url, timeout=20, **kwargs)
 
 
 async def get_shindan_title(id: int) -> str:
@@ -114,7 +114,7 @@ def parse_result(content: str) -> str:
 async def create_image(html: str, wait: int = 0) -> bytes:
     try:
         async with get_new_page(viewport={"width": 800, "height": 100}, proxy=browser_proxy) as page:
-            await page.set_content(html, wait_until='networkidle')
+            await page.set_content(html, wait_until='networkidle', timeout=10000)
             await page.wait_for_timeout(wait)
             img = await page.screenshot(full_page=True)
         return img
