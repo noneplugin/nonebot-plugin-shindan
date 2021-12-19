@@ -1,5 +1,8 @@
 import httpx
+import jinja2
+import pkgutil
 from lxml import etree
+from typing import Tuple
 
 from .browser import get_new_page
 from .config import httpx_proxy, browser_proxy
@@ -32,14 +35,19 @@ def retry(func):
     return wrapper
 
 
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
+}
+
+
 @retry
 async def get(client: httpx.AsyncClient, url: str, **kwargs):
-    return await client.get(url, timeout=20, **kwargs)
+    return await client.get(url, headers=headers, timeout=10, **kwargs)
 
 
 @retry
 async def post(client: httpx.AsyncClient, url: str, **kwargs):
-    return await client.post(url, timeout=20, **kwargs)
+    return await client.post(url, headers=headers, timeout=10, **kwargs)
 
 
 async def get_shindan_title(id: int) -> str:
@@ -63,8 +71,8 @@ async def make_shindan(id: str, name: str) -> bytes:
             'hiddenName': '无名的Z'
         }
         resp = await post(client, url, json=payload)
-    result = parse_result(resp.text)
-    image = await create_image(result, wait=2000 if 'chart.js' in result else 0)
+    html, has_chart = await render_html(resp.text)
+    image = await create_image(html, wait=2000 if has_chart else 0)
     return image
 
 
@@ -84,29 +92,36 @@ def parse_token(content: str) -> str:
         raise ParseError
 
 
-def parse_result(content: str) -> str:
+def load_file(name: str) -> str:
+    return pkgutil.get_data(__name__, f"templates/{name}").decode()
+
+
+env = jinja2.Environment(enable_async=True)
+shindan_tpl = env.from_string(load_file('shindan.html'))
+app_css = load_file('app.css')
+app_js = load_file('app.js')
+chart_js = load_file('chart.js')
+
+
+def to_string(dom) -> str:
+    return etree.tostring(dom, encoding='utf-8', method='html').decode()
+
+
+async def render_html(content: str) -> Tuple[str, bool]:
     try:
         dom = etree.HTML(content)
-        app_css = dom.xpath("//link[@rel='stylesheet']")[0]
         result_js = dom.xpath("//script[contains(text(), 'saveResult')]")[0]
-        app_js = dom.xpath("//script[contains(@src, 'app.js')]")[0]
         title = dom.xpath(
             "//div[contains(@class, 'shindanTitleDescBlock')]")[0]
         result = dom.xpath("//div[@id='shindanResultBlock']")[0]
-        chart_js = dom.xpath("//script[contains(@src, 'chart.js')]")
-
-        new_dom = etree.HTML(
-            '<html><head></head><body><div id="main-container"></div></body></html>')
-        head = new_dom.xpath("//head")[0]
-        head.append(app_css)
-        head.append(result_js)
-        head.append(app_js)
-        if chart_js:
-            head.append(chart_js[0])
-        container = new_dom.xpath("//body/div")[0]
-        container.append(title)
-        container.append(result)
-        return etree.tostring(new_dom, encoding='utf-8', method='html').decode()
+        has_chart = dom.xpath("//script[contains(@src, 'chart.js')]")
+        html = await shindan_tpl.render_async(app_css=app_css,
+                                              result_js=to_string(result_js),
+                                              app_js=app_js,
+                                              chart_js=chart_js if has_chart else '',
+                                              title=to_string(title),
+                                              result=to_string(result))
+        return html, has_chart
     except:
         raise ParseError
 
@@ -114,7 +129,7 @@ def parse_result(content: str) -> str:
 async def create_image(html: str, wait: int = 0) -> bytes:
     try:
         async with get_new_page(viewport={"width": 800, "height": 100}, proxy=browser_proxy) as page:
-            await page.set_content(html, wait_until='networkidle', timeout=10000)
+            await page.set_content(html)
             await page.wait_for_timeout(wait)
             img = await page.screenshot(full_page=True)
         return img
