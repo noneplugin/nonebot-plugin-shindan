@@ -4,23 +4,7 @@ import pkgutil
 from lxml import etree
 from typing import Tuple
 
-from .browser import get_new_page
-
-
-class ShindanError(Exception):
-    pass
-
-
-class NetworkError(ShindanError):
-    pass
-
-
-class ParseError(ShindanError):
-    pass
-
-
-class BrowserError(ShindanError):
-    pass
+from nonebot_plugin_htmlrender import html_to_pic
 
 
 def retry(func):
@@ -30,7 +14,7 @@ def retry(func):
                 return await func(*args, **kwargs)
             except:
                 continue
-        raise NetworkError
+        raise Exception('网络错误')
     return wrapper
 
 
@@ -71,8 +55,8 @@ async def make_shindan(id: str, name: str) -> bytes:
         }
         resp = await post(client, url, json=payload)
     html, has_chart = await render_html(resp.text)
-    image = await create_image(html, wait=2000 if has_chart else 0)
-    return image
+    return await html_to_pic(html, wait=2000 if has_chart else 0,
+                             viewport={"width": 800, "height": 100})
 
 
 def parse_title(content: str) -> str:
@@ -80,7 +64,7 @@ def parse_title(content: str) -> str:
         dom = etree.HTML(content)
         return dom.xpath("//h1[@id='shindanTitle']/a/text()")[0]
     except:
-        raise ParseError
+        raise Exception('网站解析错误')
 
 
 def parse_token(content: str) -> str:
@@ -88,7 +72,7 @@ def parse_token(content: str) -> str:
         dom = etree.HTML(content)
         return dom.xpath("//form[@id='shindanForm']/input/@value")[0]
     except:
-        raise ParseError
+        raise Exception('网站解析错误')
 
 
 def load_file(name: str) -> str:
@@ -114,23 +98,13 @@ async def render_html(content: str) -> Tuple[str, bool]:
             "//div[contains(@class, 'shindanTitleDescBlock')]")[0]
         result = dom.xpath("//div[@id='shindanResultBlock']")[0]
         has_chart = dom.xpath("//script[contains(@src, 'chart.js')]")
-        html = await shindan_tpl.render_async(app_css=app_css,
-                                              result_js=to_string(result_js),
-                                              app_js=app_js,
-                                              chart_js=chart_js if has_chart else '',
-                                              title=to_string(title),
-                                              result=to_string(result))
-        return html, has_chart
     except:
-        raise ParseError
+        raise Exception('网站解析错误')
 
-
-async def create_image(html: str, wait: int = 0) -> bytes:
-    try:
-        async with get_new_page(viewport={"width": 800, "height": 100}) as page:
-            await page.set_content(html)
-            await page.wait_for_timeout(wait)
-            img = await page.screenshot(full_page=True)
-        return img
-    except:
-        raise BrowserError
+    html = await shindan_tpl.render_async(app_css=app_css,
+                                          result_js=to_string(result_js),
+                                          app_js=app_js,
+                                          chart_js=chart_js if has_chart else '',
+                                          title=to_string(title),
+                                          result=to_string(result))
+    return html, has_chart

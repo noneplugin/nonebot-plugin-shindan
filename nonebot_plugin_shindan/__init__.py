@@ -1,3 +1,4 @@
+import traceback
 from nonebot.rule import Rule
 from nonebot.log import logger
 from nonebot.typing import T_State
@@ -6,7 +7,7 @@ from nonebot import on_command, on_message
 from nonebot.adapters.cqhttp import Bot, Event, MessageEvent, MessageSegment
 
 from .shindan_list import add_shindan, del_shindan, get_shindan_list
-from .shindanmaker import make_shindan, get_shindan_title, NetworkError, ParseError, BrowserError
+from .shindanmaker import make_shindan, get_shindan_title
 
 
 __help__plugin_name__ = 'shindan'
@@ -121,14 +122,8 @@ async def _(bot: Bot, event: Event, state: T_State):
     img = None
     try:
         img = await make_shindan(id, name)
-    except NetworkError:
-        logger.warning('网络错误，请检查网络连接')
-    except ParseError:
-        logger.warning('网站解析错误，请检查网络或联系插件作者')
-    except BrowserError:
-        logger.warning('图片生成错误，请检查playwright设置或联系插件作者')
     except Exception as e:
-        logger.warning(f'未知错误：{e}')
+        logger.warning(f'{e}\n{traceback.format_exc(limit=2)}')
 
     if img:
         await sd_matcher.finish(MessageSegment.image(img))
