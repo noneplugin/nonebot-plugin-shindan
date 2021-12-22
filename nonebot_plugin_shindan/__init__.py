@@ -102,8 +102,8 @@ def sd_handler() -> Rule:
             command = s['command']
             if msg.startswith(command):
                 name = msg[len(command):].strip()
-                if not name or len(name) > 20:
-                    return False
+                if not name:
+                    name = event.sender.card or event.sender.nickname
                 state['id'] = id
                 state['name'] = name
                 return True
@@ -122,11 +122,11 @@ async def _(bot: Bot, event: Event, state: T_State):
     try:
         img = await make_shindan(id, name)
     except NetworkError:
-        logger.warning('网络错误，请检查网络连接或代理设置')
+        logger.warning('网络错误，请检查网络连接')
     except ParseError:
         logger.warning('网站解析错误，请检查网络或联系插件作者')
     except BrowserError:
-        logger.warning('图片生成错误，请检查网络连接或playwright设置')
+        logger.warning('图片生成错误，请检查playwright设置或联系插件作者')
     except Exception as e:
         logger.warning(f'未知错误：{e}')
 

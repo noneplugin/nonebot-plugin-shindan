@@ -1,6 +1,6 @@
 # nonebot-plugin-shindan
 
-使用 [ShindanMaker](https://cn.shindanmaker.com) 网站的~~无聊~~趣味占卜
+使用 [ShindanMaker](https://shindanmaker.com) 网站的~~无聊~~趣味占卜
 
 利用 playwright 将占卜结果转换为图片发出，因此可以显示图片、图表结果
 
@@ -39,10 +39,4 @@ pip install nonebot_plugin_shindan
 
 ```
 playwright install chromium
-```
-
-由于 ShindanMaker 网站需要代理才能访问，可以在 .env 文件中设置代理：
-
-```
-http_proxy=http://xxx
 ```

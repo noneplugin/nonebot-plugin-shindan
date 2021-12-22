@@ -5,7 +5,6 @@ from lxml import etree
 from typing import Tuple
 
 from .browser import get_new_page
-from .config import httpx_proxy, browser_proxy
 
 
 class ShindanError(Exception):
@@ -51,9 +50,9 @@ async def post(client: httpx.AsyncClient, url: str, **kwargs):
 
 
 async def get_shindan_title(id: int) -> str:
-    url = f'https://cn.shindanmaker.com/{id}'
+    url = f'https://shindanmaker.com/{id}'
     try:
-        async with httpx.AsyncClient(proxies=httpx_proxy) as client:
+        async with httpx.AsyncClient() as client:
             resp = await get(client, url)
             return parse_title(resp.text)
     except:
@@ -61,14 +60,14 @@ async def get_shindan_title(id: int) -> str:
 
 
 async def make_shindan(id: str, name: str) -> bytes:
-    url = f'https://cn.shindanmaker.com/{id}'
-    async with httpx.AsyncClient(proxies=httpx_proxy) as client:
+    url = f'https://shindanmaker.com/{id}'
+    async with httpx.AsyncClient() as client:
         resp = await get(client, url)
         token = parse_token(resp.text)
         payload = {
             '_token': token,
             'shindanName': name,
-            'hiddenName': '无名的Z'
+            'hiddenName': '名無しのR'
         }
         resp = await post(client, url, json=payload)
     html, has_chart = await render_html(resp.text)
@@ -128,7 +127,7 @@ async def render_html(content: str) -> Tuple[str, bool]:
 
 async def create_image(html: str, wait: int = 0) -> bytes:
     try:
-        async with get_new_page(viewport={"width": 800, "height": 100}, proxy=browser_proxy) as page:
+        async with get_new_page(viewport={"width": 800, "height": 100}) as page:
             await page.set_content(html)
             await page.wait_for_timeout(wait)
             img = await page.screenshot(full_page=True)
