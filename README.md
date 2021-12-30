@@ -36,9 +36,3 @@ nb plugin install nonebot_plugin_shindan
 ```
 pip install nonebot_plugin_shindan
 ```
-
-由于用到了 playwright，使用前务必先安装无头浏览器
-
-```
-playwright install chromium
-```
