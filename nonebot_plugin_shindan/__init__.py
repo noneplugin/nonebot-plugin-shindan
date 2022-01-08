@@ -69,6 +69,8 @@ async def _(bot: Bot, event: Event, state: T_State):
     sd_list = get_shindan_list()
     if id in sd_list:
         await cmd_add.finish('该占卜已存在')
+    if command in sd_list.values():
+        await cmd_add.finish('该指令已存在')
 
     if add_shindan(id, command, title):
         await cmd_add.finish(f'成功添加占卜“{title}”，可通过“{command} 名字”使用')
@@ -81,7 +83,7 @@ async def _(bot: Bot, event: Event, state: T_State):
         await cmd_del.finish(del_usage)
 
     if not arg.isdigit():
-        await cmd_del.finish(add_usage)
+        await cmd_del.finish(del_usage)
 
     id = arg
     sd_list = get_shindan_list()
@@ -99,7 +101,9 @@ def sd_handler() -> Rule:
 
         msg = event.get_plaintext().strip()
         sd_list = get_shindan_list()
-        for id, s in sd_list.items():
+        sd_list = sorted(sd_list.items(), reverse=True,
+                         key=lambda items: items[1]['command'])
+        for id, s in sd_list:
             command = s['command']
             if msg.startswith(command):
                 name = msg[len(command):].strip()
@@ -122,8 +126,8 @@ async def _(bot: Bot, event: Event, state: T_State):
     img = None
     try:
         img = await make_shindan(id, name)
-    except Exception as e:
-        logger.warning(f'{e}\n{traceback.format_exc(limit=2)}')
+    except:
+        logger.warning(traceback.format_exc())
 
     if img:
         await sd_matcher.finish(MessageSegment.image(img))
