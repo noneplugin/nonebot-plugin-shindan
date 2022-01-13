@@ -4,7 +4,8 @@ from nonebot.log import logger
 from nonebot.typing import T_State
 from nonebot.permission import SUPERUSER
 from nonebot import on_command, on_message
-from nonebot.adapters.cqhttp import Bot, Event, MessageEvent, MessageSegment
+from nonebot.params import CommandArg, EventPlainText, State
+from nonebot.adapters.onebot.v11 import MessageEvent, Message, MessageSegment
 
 from .shindan_list import add_shindan, del_shindan, get_shindan_list
 from .shindanmaker import make_shindan, get_shindan_title
@@ -29,19 +30,23 @@ del_usage = """Usage:
 删除占卜 {id}
 如：删除占卜 917962"""
 
-cmd_sd = on_command('占卜', aliases={'shindan', 'shindanmaker'}, priority=8)
-cmd_ls = on_command('占卜列表', aliases={'可用占卜'}, priority=8)
-cmd_add = on_command('添加占卜', permission=SUPERUSER, priority=8)
-cmd_del = on_command('删除占卜', permission=SUPERUSER, priority=8)
+cmd_sd = on_command('占卜', aliases={'shindan', 'shindanmaker'},
+                    block=True, priority=8)
+cmd_ls = on_command('占卜列表', aliases={'可用占卜'},
+                    block=True, priority=8)
+cmd_add = on_command('添加占卜', permission=SUPERUSER,
+                     block=True, priority=8)
+cmd_del = on_command('删除占卜', permission=SUPERUSER,
+                     block=True, priority=8)
 
 
 @cmd_sd.handle()
-async def _(bot: Bot, event: Event, state: T_State):
+async def _():
     await cmd_sd.finish(__usage__)
 
 
 @cmd_ls.handle()
-async def _(bot: Bot, event: Event, state: T_State):
+async def _():
     sd_list = get_shindan_list()
 
     if not sd_list:
@@ -51,8 +56,8 @@ async def _(bot: Bot, event: Event, state: T_State):
 
 
 @cmd_add.handle()
-async def _(bot: Bot, event: Event, state: T_State):
-    arg = event.get_plaintext().strip()
+async def _(msg: Message = CommandArg()):
+    arg = msg.extract_plain_text().strip()
     if not arg:
         await cmd_add.finish(add_usage)
 
@@ -77,8 +82,8 @@ async def _(bot: Bot, event: Event, state: T_State):
 
 
 @cmd_del.handle()
-async def _(bot: Bot, event: Event, state: T_State):
-    arg = event.get_plaintext().strip()
+async def _(msg: Message = CommandArg()):
+    arg = msg.extract_plain_text().strip()
     if not arg:
         await cmd_del.finish(del_usage)
 
@@ -95,11 +100,7 @@ async def _(bot: Bot, event: Event, state: T_State):
 
 
 def sd_handler() -> Rule:
-    async def handle(bot: "Bot", event: "Event", state: T_State) -> bool:
-        if not isinstance(event, MessageEvent):
-            return False
-
-        msg = event.get_plaintext().strip()
+    async def handle(event: MessageEvent, msg: str = EventPlainText(), state: T_State = State()) -> bool:
         sd_list = get_shindan_list()
         sd_list = sorted(sd_list.items(), reverse=True,
                          key=lambda items: items[1]['command'])
@@ -120,9 +121,9 @@ sd_matcher = on_message(sd_handler(), priority=9)
 
 
 @sd_matcher.handle()
-async def _(bot: Bot, event: Event, state: T_State):
-    id = state['id']
-    name = state['name']
+async def _(state: T_State = State()):
+    id = state.get('id')
+    name = state.get('name')
     img = None
     try:
         img = await make_shindan(id, name)
