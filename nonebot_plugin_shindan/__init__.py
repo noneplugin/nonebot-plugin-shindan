@@ -158,7 +158,7 @@ async def _(state: T_State = State()):
     id = state.get('id')
     name = state.get('name')
     mode = state.get('mode')
-    img = None
+    res = None
     try:
         res = await make_shindan(id, name, mode)
     except:
@@ -167,6 +167,6 @@ async def _(state: T_State = State()):
     if isinstance(res, str):
         await sd_matcher.finish(res)
     elif isinstance(res, bytes):
-        await sd_matcher.finish(MessageSegment.image(img))
+        await sd_matcher.finish(MessageSegment.image(res))
     else:
         await sd_matcher.finish('出错了，请稍后再试')
