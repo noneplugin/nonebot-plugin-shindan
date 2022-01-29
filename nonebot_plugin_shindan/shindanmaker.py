@@ -1,11 +1,16 @@
+import re
 import time
 import httpx
 import jinja2
-import pkgutil
-from lxml import etree
+from pathlib import Path
+from bs4 import BeautifulSoup
 from typing import Tuple, Union
 
 from nonebot_plugin_htmlrender import html_to_pic
+
+
+tpl_path = str(Path(__file__).parent / 'templates')
+env = jinja2.Environment(loader=jinja2.FileSystemLoader(tpl_path), enable_async=True)
 
 
 def retry(func):
@@ -40,7 +45,8 @@ async def get_shindan_title(id: int) -> str:
     try:
         async with httpx.AsyncClient() as client:
             resp = await get(client, url)
-            return parse_title(resp.text)
+            dom = BeautifulSoup(resp.text, 'lxml')
+            return dom.find('h1', {'id': 'shindanTitle'}).text
     except:
         return ''
 
@@ -50,7 +56,8 @@ async def make_shindan(id: str, name: str, mode='image') -> Union[str, bytes]:
     seed = time.strftime("%y%m%d", time.localtime())
     async with httpx.AsyncClient() as client:
         resp = await get(client, url)
-        token = parse_token(resp.text)
+        dom = BeautifulSoup(resp.text, 'lxml')
+        token = dom.find('form', {'id': 'shindanForm'}).find('input')['value']
         payload = {'_token': token, 'shindanName': name + seed, 'hiddenName': '名無しのR'}
         resp = await post(client, url, json=payload)
 
@@ -59,70 +66,28 @@ async def make_shindan(id: str, name: str, mode='image') -> Union[str, bytes]:
         html, has_chart = await render_html(content)
         html = html.replace(name + seed, name)
         return await html_to_pic(
-            html, wait=2000 if has_chart else 0, viewport={"width": 800, "height": 100}
+            html,
+            template_path=tpl_path,
+            wait=2000 if has_chart else 0,
+            viewport={"width": 800, "height": 100},
         )
     else:
-        result = parse_result(content)
-        result = result.replace(name + seed, name)
-        return result
-
-
-def parse_title(content: str) -> str:
-    try:
-        dom = etree.HTML(content)
-        return dom.xpath("//h1[@id='shindanTitle']/a/text()")[0]
-    except:
-        raise Exception('网站解析错误')
-
-
-def parse_token(content: str) -> str:
-    try:
-        dom = etree.HTML(content)
-        return dom.xpath("//form[@id='shindanForm']/input/@value")[0]
-    except:
-        raise Exception('网站解析错误')
-
-
-def parse_result(content: str) -> str:
-    try:
-        dom = etree.HTML(content)
-        results = dom.xpath("//span[@id='shindanResult']")
-        return '\n'.join([result.xpath('string(.)').strip() for result in results])
-    except:
-        raise Exception('网站解析错误')
-
-
-def load_file(name: str) -> str:
-    return pkgutil.get_data(__name__, f"templates/{name}").decode()
-
-
-env = jinja2.Environment(enable_async=True)
-shindan_tpl = env.from_string(load_file('shindan.html'))
-app_css = load_file('app.css')
-app_js = load_file('app.js')
-chart_js = load_file('chart.js')
-
-
-def to_string(dom) -> str:
-    return etree.tostring(dom, encoding='utf-8', method='html').decode()
+        dom = BeautifulSoup(content, 'lxml')
+        result = dom.find('span', {'id': 'shindanResult'})
+        for img in result.find_all('img'):
+            img.replace_with(img['src'])
+        return result.text.replace(name + seed, name)
 
 
 async def render_html(content: str) -> Tuple[str, bool]:
-    try:
-        dom = etree.HTML(content)
-        result_js = dom.xpath("//script[contains(text(), 'saveResult')]")[0]
-        title = dom.xpath("//div[contains(@class, 'shindanTitleDescBlock')]")[0]
-        result = dom.xpath("//div[@id='shindanResultBlock']")[0]
-        has_chart = dom.xpath("//script[contains(@src, 'chart.js')]")
-    except:
-        raise Exception('网站解析错误')
+    dom = BeautifulSoup(content, 'lxml')
+    result_js = str(dom.find('script', string=re.compile(r'saveResult')))
+    title = str(dom.find('div', class_='shindanTitleDescBlock'))
+    result = str(dom.find('div', {'id': 'shindanResultBlock'}))
+    has_chart = bool(dom.find('script', string=re.compile(r'chart.js')))
 
+    shindan_tpl = env.get_template('shindan.html')
     html = await shindan_tpl.render_async(
-        app_css=app_css,
-        result_js=to_string(result_js),
-        app_js=app_js,
-        chart_js=chart_js if has_chart else '',
-        title=to_string(title),
-        result=to_string(result),
+        result_js=result_js, title=title, result=result, has_chart=has_chart
     )
     return html, has_chart

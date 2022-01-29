@@ -1,9 +1,11 @@
 <html>
   <head>
-    <style type="text/css">{{app_css}}</style>
+    <link rel="stylesheet" type="text/css" href="./app.css" />
     {{result_js}}
-    <script>{{app_js}}</script>
-    <script>{{chart_js}}</script>
+    <script src="./app.js"></script>
+    {% if has_chart %}
+    <script src="./chart.js"></script>
+    {% endif %}
   </head>
   <body>
     <div id="main-container">
