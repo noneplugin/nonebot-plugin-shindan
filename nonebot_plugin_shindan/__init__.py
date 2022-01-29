@@ -197,6 +197,6 @@ async def _(state: T_State = State()):
             message.append(
                 MessageSegment.image(msg) if re.match(img_pattern, msg) else msg
             )
-        await sd_matcher.finish(res)
+        await sd_matcher.finish(message)
     elif isinstance(res, bytes):
         await sd_matcher.finish(MessageSegment.image(res))

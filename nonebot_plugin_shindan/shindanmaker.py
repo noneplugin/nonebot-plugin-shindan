@@ -9,7 +9,7 @@ from typing import Tuple, Union
 from nonebot_plugin_htmlrender import html_to_pic
 
 
-tpl_path = str(Path(__file__).parent / 'templates')
+tpl_path = Path(__file__).parent / 'templates'
 env = jinja2.Environment(loader=jinja2.FileSystemLoader(tpl_path), enable_async=True)
 
 
@@ -67,9 +67,9 @@ async def make_shindan(id: str, name: str, mode='image') -> Union[str, bytes]:
         html = html.replace(name + seed, name)
         return await html_to_pic(
             html,
-            template_path=tpl_path,
+            template_path=f'file://{tpl_path.absolute()}',
             wait=2000 if has_chart else 0,
-            viewport={"width": 800, "height": 100},
+            viewport={'width': 800, 'height': 100},
         )
     else:
         dom = BeautifulSoup(content, 'lxml')
@@ -84,7 +84,7 @@ async def render_html(content: str) -> Tuple[str, bool]:
     result_js = str(dom.find('script', string=re.compile(r'saveResult')))
     title = str(dom.find('div', class_='shindanTitleDescBlock'))
     result = str(dom.find('div', {'id': 'shindanResultBlock'}))
-    has_chart = bool(dom.find('script', string=re.compile(r'chart.js')))
+    has_chart = 'chart.js' in content
 
     shindan_tpl = env.get_template('shindan.html')
     html = await shindan_tpl.render_async(
