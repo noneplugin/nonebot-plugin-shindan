@@ -3,7 +3,7 @@ import httpx
 import jinja2
 import pkgutil
 from lxml import etree
-from typing import Tuple
+from typing import Tuple, Union
 
 from nonebot_plugin_htmlrender import html_to_pic
 
@@ -45,7 +45,7 @@ async def get_shindan_title(id: int) -> str:
         return ''
 
 
-async def make_shindan(id: str, name: str) -> bytes:
+async def make_shindan(id: str, name: str, mode='image') -> Union[str, bytes]:
     url = f'https://shindanmaker.com/{id}'
     seed = time.strftime("%y%m%d", time.localtime())
     async with httpx.AsyncClient() as client:
@@ -53,11 +53,18 @@ async def make_shindan(id: str, name: str) -> bytes:
         token = parse_token(resp.text)
         payload = {'_token': token, 'shindanName': name + seed, 'hiddenName': '名無しのR'}
         resp = await post(client, url, json=payload)
-    html, has_chart = await render_html(resp.text)
-    html = html.replace(name + seed, name)
-    return await html_to_pic(
-        html, wait=2000 if has_chart else 0, viewport={"width": 800, "height": 100}
-    )
+
+    content = resp.text
+    if mode == 'image':
+        html, has_chart = await render_html(content)
+        html = html.replace(name + seed, name)
+        return await html_to_pic(
+            html, wait=2000 if has_chart else 0, viewport={"width": 800, "height": 100}
+        )
+    else:
+        result = parse_result(content)
+        result = result.replace(name + seed, name)
+        return result
 
 
 def parse_title(content: str) -> str:
@@ -72,6 +79,14 @@ def parse_token(content: str) -> str:
     try:
         dom = etree.HTML(content)
         return dom.xpath("//form[@id='shindanForm']/input/@value")[0]
+    except:
+        raise Exception('网站解析错误')
+
+
+def parse_result(content: str) -> str:
+    try:
+        dom = etree.HTML(content)
+        return dom.xpath("//div[@id='shindanResult']")[0]
     except:
         raise Exception('网站解析错误')
 

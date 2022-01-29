@@ -7,7 +7,7 @@ from nonebot import on_command, on_message
 from nonebot.params import CommandArg, EventPlainText, State
 from nonebot.adapters.onebot.v11 import MessageEvent, Message, MessageSegment
 
-from .shindan_list import add_shindan, del_shindan, get_shindan_list
+from .shindan_list import add_shindan, del_shindan, set_shindan, get_shindan_list
 from .shindanmaker import make_shindan, get_shindan_title
 
 
@@ -22,6 +22,7 @@ __example__ = '''
 '''.strip()
 __usage__ = f'{__des__}\nUsage:\n{__cmd__}\nExample:\n{__example__}'
 
+
 add_usage = """Usage:
 添加占卜 {id} {指令}
 如：添加占卜 917962 人设生成"""
@@ -30,12 +31,18 @@ del_usage = """Usage:
 删除占卜 {id}
 如：删除占卜 917962"""
 
+set_usage = """Usage:
+设置占卜 {id} {mode}
+设置占卜输出模式：'text' 或 'image'(默认)
+如：设置占卜 360578 text"""
+
 cmd_sd = on_command(
     '占卜', aliases={'shindan', 'shindanmaker'}, rule=to_me(), block=True, priority=8
 )
 cmd_ls = on_command('占卜列表', aliases={'可用占卜'}, block=True, priority=8)
 cmd_add = on_command('添加占卜', permission=SUPERUSER, block=True, priority=8)
 cmd_del = on_command('删除占卜', permission=SUPERUSER, block=True, priority=8)
+cmd_set = on_command('设置占卜', permission=SUPERUSER, block=True, priority=8)
 
 
 @cmd_sd.handle()
@@ -97,7 +104,27 @@ async def _(msg: Message = CommandArg()):
         await cmd_del.finish('不存在该占卜')
 
     if del_shindan(id):
-        await cmd_del.finish(f'成功删除该占卜')
+        await cmd_del.finish('成功删除该占卜')
+
+
+@cmd_set.handle()
+async def _(msg: Message = CommandArg()):
+    arg = msg.extract_plain_text().strip()
+    if not arg:
+        await cmd_set.finish(set_usage)
+
+    args = arg.split()
+    if len(args) != 2 or not args[0].isdigit() or args[1] not in ['text', 'image']:
+        await cmd_set.finish(set_usage)
+
+    id = args[0]
+    mode = args[1]
+    sd_list = get_shindan_list()
+    if id not in sd_list:
+        await cmd_set.finish('不存在该占卜')
+
+    if set_shindan(id, mode):
+        await cmd_set.finish('设置成功')
 
 
 def sd_handler() -> Rule:
@@ -116,6 +143,7 @@ def sd_handler() -> Rule:
                     name = event.sender.card or event.sender.nickname
                 state['id'] = id
                 state['name'] = name
+                state['mode'] = s.get('mode', 'image')
                 return True
         return False
 
@@ -129,13 +157,16 @@ sd_matcher = on_message(sd_handler(), priority=9)
 async def _(state: T_State = State()):
     id = state.get('id')
     name = state.get('name')
+    mode = state.get('mode')
     img = None
     try:
-        img = await make_shindan(id, name)
+        res = await make_shindan(id, name, mode)
     except:
         logger.warning(traceback.format_exc())
 
-    if img:
+    if isinstance(res, str):
+        await sd_matcher.finish(res)
+    elif isinstance(res, bytes):
         await sd_matcher.finish(MessageSegment.image(img))
     else:
         await sd_matcher.finish('出错了，请稍后再试')
