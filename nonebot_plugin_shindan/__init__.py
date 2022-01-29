@@ -1,3 +1,4 @@
+import re
 import traceback
 from nonebot.rule import Rule, to_me
 from nonebot.log import logger
@@ -182,15 +183,20 @@ async def _(state: T_State = State()):
     id = state.get('id')
     name = state.get('name')
     mode = state.get('mode')
-    res = None
     try:
         res = await make_shindan(id, name, mode)
     except:
         logger.warning(traceback.format_exc())
+        await sd_matcher.finish('出错了，请稍后再试')
 
     if isinstance(res, str):
+        img_pattern = r'((?:http|https)://\S+\.(?:jpg|jpeg|png|gif|bmp|webp))'
+        message = Message()
+        msgs = re.split(img_pattern, res)
+        for msg in msgs:
+            message.append(
+                MessageSegment.image(msg) if re.match(img_pattern, msg) else msg
+            )
         await sd_matcher.finish(res)
     elif isinstance(res, bytes):
         await sd_matcher.finish(MessageSegment.image(res))
-    else:
-        await sd_matcher.finish('出错了，请稍后再试')

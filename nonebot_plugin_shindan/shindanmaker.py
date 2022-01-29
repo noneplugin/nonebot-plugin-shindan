@@ -86,8 +86,8 @@ def parse_token(content: str) -> str:
 def parse_result(content: str) -> str:
     try:
         dom = etree.HTML(content)
-        result = dom.xpath("//span[@id='shindanResult']")[0]
-        return result.xpath('string(.)').strip()
+        results = dom.xpath("//span[@id='shindanResult']")
+        return '\n'.join([result.xpath('string(.)').strip() for result in results])
     except:
         raise Exception('网站解析错误')
 
