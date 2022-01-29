@@ -4,8 +4,14 @@ from nonebot.log import logger
 from nonebot.typing import T_State
 from nonebot.permission import SUPERUSER
 from nonebot import on_command, on_message
-from nonebot.params import CommandArg, EventPlainText, State
-from nonebot.adapters.onebot.v11 import MessageEvent, Message, MessageSegment
+from nonebot.params import CommandArg, EventMessage, EventPlainText, State
+from nonebot.adapters.onebot.v11 import (
+    Bot,
+    MessageEvent,
+    GroupMessageEvent,
+    Message,
+    MessageSegment,
+)
 
 from .shindan_list import add_shindan, del_shindan, set_shindan, get_shindan_list
 from .shindanmaker import make_shindan, get_shindan_title
@@ -129,18 +135,35 @@ async def _(msg: Message = CommandArg()):
 
 def sd_handler() -> Rule:
     async def handle(
-        event: MessageEvent, msg: str = EventPlainText(), state: T_State = State()
+        bot: Bot,
+        event: MessageEvent,
+        msg: Message = EventMessage(),
+        msg_text: str = EventPlainText(),
+        state: T_State = State(),
     ) -> bool:
+        async def get_name(command: str) -> str:
+            name = ''
+            for msg_seg in msg:
+                if msg_seg.type == 'at':
+                    assert isinstance(event, GroupMessageEvent)
+                    info = await bot.get_group_member_info(
+                        group_id=event.group_id, user_id=msg_seg.data['qq']
+                    )
+                    name = info.get('card', '') or info.get('nickname', '')
+                    break
+            if not name:
+                name = msg_text[len(command) :].strip()
+            if not name:
+                name = event.sender.card or event.sender.nickname
+
         sd_list = get_shindan_list()
         sd_list = sorted(
             sd_list.items(), reverse=True, key=lambda items: items[1]['command']
         )
         for id, s in sd_list:
             command = s['command']
-            if msg.startswith(command):
-                name = msg[len(command) :].strip()
-                if not name:
-                    name = event.sender.card or event.sender.nickname
+            if msg_text.startswith(command):
+                name = await get_name(command)
                 state['id'] = id
                 state['name'] = name
                 state['mode'] = s.get('mode', 'image')
