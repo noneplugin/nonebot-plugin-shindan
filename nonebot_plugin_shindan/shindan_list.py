@@ -5,38 +5,14 @@ data_path = Path() / 'data' / 'shindan' / 'shindan_list.json'
 
 
 default_list = {
-    '162207': {
-        'command': '二次元少女',
-        'title': '你的二次元少女化形象'
-    },
-    '917962': {
-        'command': '人设生成',
-        'title': '人设生成器'
-    },
-    '790697': {
-        'command': '中二称号',
-        'title': '奇妙的中二称号生成器'
-    },
-    '587874': {
-        'command': '异世界转生',
-        'title': '異世界轉生—∩開始的種族∩——'
-    },
-    '1098085': {
-        'command': '特殊能力',
-        'title': '测测你的特殊能力是什么？'
-    },
-    '940824': {
-        'command': '魔法人生',
-        'title': '魔法人生：我在霍格沃兹读书时发生的两三事'
-    },
-    '1075116': {
-        'command': '抽老婆',
-        'title': 'あなたの二次元での嫁ヒロイン'
-    },
-    '400813': {
-        'command': '抽舰娘',
-        'title': '【艦これ】あなたの嫁になる艦娘は？'
-    },
+    '162207': {'command': '二次元少女', 'title': '你的二次元少女化形象'},
+    '917962': {'command': '人设生成', 'title': '人设生成器'},
+    '790697': {'command': '中二称号', 'title': '奇妙的中二称号生成器'},
+    '587874': {'command': '异世界转生', 'title': '異世界轉生—∩開始的種族∩——'},
+    '1098085': {'command': '特殊能力', 'title': '测测你的特殊能力是什么？'},
+    '940824': {'command': '魔法人生', 'title': '魔法人生：我在霍格沃兹读书时发生的两三事'},
+    '1075116': {'command': '抽老婆', 'title': 'あなたの二次元での嫁ヒロイン'},
+    '400813': {'command': '抽舰娘', 'title': '【艦これ】あなたの嫁になる艦娘は？'},
 }
 
 
@@ -57,7 +33,7 @@ def dump_shindan_list():
         data_path.open('w', encoding='utf-8'),
         indent=4,
         separators=(',', ': '),
-        ensure_ascii=False
+        ensure_ascii=False,
     )
 
 
@@ -68,10 +44,7 @@ def get_shindan_list() -> dict:
 def add_shindan(id: str, cmd: str, title: str) -> bool:
     if id in _shindan_list:
         return False
-    _shindan_list[id] = {
-        'command': cmd,
-        'title': title
-    }
+    _shindan_list[id] = {'command': cmd, 'title': title}
     dump_shindan_list()
     return True
 

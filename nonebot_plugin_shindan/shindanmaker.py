@@ -1,3 +1,4 @@
+import time
 import httpx
 import jinja2
 import pkgutil
@@ -15,6 +16,7 @@ def retry(func):
             except:
                 continue
         raise Exception('网络错误')
+
     return wrapper
 
 
@@ -45,18 +47,17 @@ async def get_shindan_title(id: int) -> str:
 
 async def make_shindan(id: str, name: str) -> bytes:
     url = f'https://shindanmaker.com/{id}'
+    seed = time.strftime("%y%m%d", time.localtime())
     async with httpx.AsyncClient() as client:
         resp = await get(client, url)
         token = parse_token(resp.text)
-        payload = {
-            '_token': token,
-            'shindanName': name,
-            'hiddenName': '名無しのR'
-        }
+        payload = {'_token': token, 'shindanName': name + seed, 'hiddenName': '名無しのR'}
         resp = await post(client, url, json=payload)
     html, has_chart = await render_html(resp.text)
-    return await html_to_pic(html, wait=2000 if has_chart else 0,
-                             viewport={"width": 800, "height": 100})
+    html = html.replace(name + seed, name)
+    return await html_to_pic(
+        html, wait=2000 if has_chart else 0, viewport={"width": 800, "height": 100}
+    )
 
 
 def parse_title(content: str) -> str:
@@ -94,17 +95,18 @@ async def render_html(content: str) -> Tuple[str, bool]:
     try:
         dom = etree.HTML(content)
         result_js = dom.xpath("//script[contains(text(), 'saveResult')]")[0]
-        title = dom.xpath(
-            "//div[contains(@class, 'shindanTitleDescBlock')]")[0]
+        title = dom.xpath("//div[contains(@class, 'shindanTitleDescBlock')]")[0]
         result = dom.xpath("//div[@id='shindanResultBlock']")[0]
         has_chart = dom.xpath("//script[contains(@src, 'chart.js')]")
     except:
         raise Exception('网站解析错误')
 
-    html = await shindan_tpl.render_async(app_css=app_css,
-                                          result_js=to_string(result_js),
-                                          app_js=app_js,
-                                          chart_js=chart_js if has_chart else '',
-                                          title=to_string(title),
-                                          result=to_string(result))
+    html = await shindan_tpl.render_async(
+        app_css=app_css,
+        result_js=to_string(result_js),
+        app_js=app_js,
+        chart_js=chart_js if has_chart else '',
+        title=to_string(title),
+        result=to_string(result),
+    )
     return html, has_chart

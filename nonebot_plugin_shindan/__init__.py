@@ -1,5 +1,5 @@
 import traceback
-from nonebot.rule import Rule
+from nonebot.rule import Rule, to_me
 from nonebot.log import logger
 from nonebot.typing import T_State
 from nonebot.permission import SUPERUSER
@@ -30,14 +30,12 @@ del_usage = """Usage:
 删除占卜 {id}
 如：删除占卜 917962"""
 
-cmd_sd = on_command('占卜', aliases={'shindan', 'shindanmaker'},
-                    block=True, priority=8)
-cmd_ls = on_command('占卜列表', aliases={'可用占卜'},
-                    block=True, priority=8)
-cmd_add = on_command('添加占卜', permission=SUPERUSER,
-                     block=True, priority=8)
-cmd_del = on_command('删除占卜', permission=SUPERUSER,
-                     block=True, priority=8)
+cmd_sd = on_command(
+    '占卜', aliases={'shindan', 'shindanmaker'}, rule=to_me(), block=True, priority=8
+)
+cmd_ls = on_command('占卜列表', aliases={'可用占卜'}, block=True, priority=8)
+cmd_add = on_command('添加占卜', permission=SUPERUSER, block=True, priority=8)
+cmd_del = on_command('删除占卜', permission=SUPERUSER, block=True, priority=8)
 
 
 @cmd_sd.handle()
@@ -52,7 +50,10 @@ async def _():
     if not sd_list:
         await cmd_ls.finish('尚未添加任何占卜')
 
-    await cmd_ls.finish(f'可用占卜：\n' + '\n'.join([f"{s['command']}（{s['title']}）" for s in sd_list.values()]))
+    await cmd_ls.finish(
+        f'可用占卜：\n'
+        + '\n'.join([f"{s['command']}（{s['title']}）" for s in sd_list.values()])
+    )
 
 
 @cmd_add.handle()
@@ -100,20 +101,24 @@ async def _(msg: Message = CommandArg()):
 
 
 def sd_handler() -> Rule:
-    async def handle(event: MessageEvent, msg: str = EventPlainText(), state: T_State = State()) -> bool:
+    async def handle(
+        event: MessageEvent, msg: str = EventPlainText(), state: T_State = State()
+    ) -> bool:
         sd_list = get_shindan_list()
-        sd_list = sorted(sd_list.items(), reverse=True,
-                         key=lambda items: items[1]['command'])
+        sd_list = sorted(
+            sd_list.items(), reverse=True, key=lambda items: items[1]['command']
+        )
         for id, s in sd_list:
             command = s['command']
             if msg.startswith(command):
-                name = msg[len(command):].strip()
+                name = msg[len(command) :].strip()
                 if not name:
                     name = event.sender.card or event.sender.nickname
                 state['id'] = id
                 state['name'] = name
                 return True
         return False
+
     return Rule(handle)
 
 
