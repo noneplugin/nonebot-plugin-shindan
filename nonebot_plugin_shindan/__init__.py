@@ -155,6 +155,7 @@ def sd_handler() -> Rule:
                 name = msg_text[len(command) :].strip()
             if not name:
                 name = event.sender.card or event.sender.nickname
+            return name
 
         sd_list = get_shindan_list()
         sd_list = sorted(
