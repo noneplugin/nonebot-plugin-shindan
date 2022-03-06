@@ -4,6 +4,8 @@
 
 利用 playwright 将占卜结果转换为图片发出，因此可以显示图片、图表结果
 
+插件依赖 [nonebot-plugin-htmlrender](https://github.com/kexue-z/nonebot-plugin-htmlrender) 插件来渲染图片，使用前需要检查 playwright 相关的依赖是否正常安装；同时为确保字体正常渲染，需要系统中存在中文字体
+
 ### 使用方式
 
 默认占卜列表及对应的网站id如下：
