@@ -42,6 +42,9 @@ def dump_shindan_list():
     )
 
 
+dump_shindan_list()
+
+
 def get_shindan_list() -> Dict[str, dict]:
     return _shindan_list
 
