@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nonebot_plugin_shindan"
-version = "0.2.3.1"
+version = "0.2.4"
 description = "Nonebot2 plugin for using ShindanMaker"
 authors = ["meetwq <meetwq@gmail.com>"]
 license = "MIT"

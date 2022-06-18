@@ -51,6 +51,8 @@ async def get_shindan_title(id: str) -> str:
     url = f"https://shindanmaker.com/{id}"
     async with httpx.AsyncClient() as client:
         resp = await get(client, url)
+        if resp.status_code == 302:
+            resp = await get(client, resp.headers["location"])
         dom = BeautifulSoup(resp.text, "lxml")
         title = dom.find("h1", {"id": "shindanTitle"})
         assert title
@@ -62,6 +64,8 @@ async def make_shindan(id: str, name: str, mode="image") -> Union[str, bytes]:
     seed = time.strftime("%y%m%d", time.localtime())
     async with httpx.AsyncClient() as client:
         resp = await get(client, url)
+        if resp.status_code == 302:
+            resp = await get(client, resp.headers["location"])
         dom = BeautifulSoup(resp.text, "lxml")
         token = dom.find("form", {"id": "shindanForm"}).find("input")["value"]  # type: ignore
         payload = {"_token": token, "shindanName": name + seed, "hiddenName": "名無しのR"}
