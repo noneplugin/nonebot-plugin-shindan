@@ -52,7 +52,11 @@ shindanmaker_cookie=xxx
 
 `cookie` 获取方式：
 
-`F12` 打开开发工具，查看 `shindanmaker.com` 请求的响应头，找形如 `_session=xxx;` 的片段
+`F12` 打开开发工具，查看 `shindanmaker.com` 请求的响应头，找形如 `_session=xxx;` 的片段，如：
+
+```
+shindanmaker_cookie="_session=xxx;"
+```
 
 <div align="left">
   <img src="https://s2.loli.net/2022/06/18/1CqlcTrdVt5vJp6.png" width="500" />
