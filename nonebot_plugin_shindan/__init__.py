@@ -5,7 +5,7 @@ from nonebot.typing import T_State
 from nonebot.rule import Rule, to_me
 from nonebot.permission import SUPERUSER
 from nonebot.plugin import PluginMetadata
-from nonebot import on_command, on_message
+from nonebot import on_command, on_message, require
 from nonebot.params import CommandArg, EventMessage, EventPlainText, State
 from nonebot.adapters.onebot.v11 import (
     Bot,
@@ -19,6 +19,8 @@ from .config import Config
 from .shindanmaker import make_shindan, get_shindan_title
 from .shindan_list import add_shindan, del_shindan, set_shindan, get_shindan_list
 
+require("nonebot_plugin_htmlrender")
+
 __plugin_meta__ = PluginMetadata(
     name="趣味占卜",
     description="使用ShindanMaker网站的趣味占卜",
@@ -28,7 +30,7 @@ __plugin_meta__ = PluginMetadata(
         "unique_name": "shindan",
         "example": "人设生成 小Q",
         "author": "meetwq <meetwq@gmail.com>",
-        "version": "0.2.5",
+        "version": "0.2.6",
     },
 )
 
