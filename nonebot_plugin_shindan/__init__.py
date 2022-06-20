@@ -1,9 +1,10 @@
 import re
 import traceback
-from nonebot.rule import Rule, to_me
 from nonebot.log import logger
 from nonebot.typing import T_State
+from nonebot.rule import Rule, to_me
 from nonebot.permission import SUPERUSER
+from nonebot.plugin import PluginMetadata
 from nonebot import on_command, on_message
 from nonebot.params import CommandArg, EventMessage, EventPlainText, State
 from nonebot.adapters.onebot.v11 import (
@@ -14,21 +15,22 @@ from nonebot.adapters.onebot.v11 import (
     MessageSegment,
 )
 
-from .shindan_list import add_shindan, del_shindan, set_shindan, get_shindan_list
+from .config import Config
 from .shindanmaker import make_shindan, get_shindan_title
+from .shindan_list import add_shindan, del_shindan, set_shindan, get_shindan_list
 
-
-__help__plugin_name__ = "shindan"
-__des__ = "shindanmaker趣味占卜"
-__cmd__ = """
-发送“占卜列表”查看可用占卜
-发送“{占卜名} {名字}”使用占卜
-""".strip()
-__example__ = """
-人设生成 小Q
-""".strip()
-__usage__ = f"{__des__}\nUsage:\n{__cmd__}\nExample:\n{__example__}"
-
+__plugin_meta__ = PluginMetadata(
+    name="趣味占卜",
+    description="使用ShindanMaker网站的趣味占卜",
+    usage="发送“占卜列表”查看可用占卜\n发送“{占卜名} {名字}”使用占卜",
+    config=Config,
+    extra={
+        "unique_name": "shindan",
+        "example": "人设生成 小Q",
+        "author": "meetwq <meetwq@gmail.com>",
+        "version": "0.2.5",
+    },
+)
 
 add_usage = """Usage:
 添加占卜 {id} {指令}
@@ -54,7 +56,7 @@ cmd_set = on_command("设置占卜", permission=SUPERUSER, block=True, priority=
 
 @cmd_sd.handle()
 async def _():
-    await cmd_sd.finish(__usage__)
+    await cmd_sd.finish(__plugin_meta__.usage)
 
 
 @cmd_ls.handle()
@@ -175,7 +177,7 @@ def sd_handler() -> Rule:
     return Rule(handle)
 
 
-sd_matcher = on_message(sd_handler(), priority=9)
+sd_matcher = on_message(sd_handler(), priority=13)
 
 
 @sd_matcher.handle()
