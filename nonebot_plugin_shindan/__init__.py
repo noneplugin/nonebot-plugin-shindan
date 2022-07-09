@@ -18,7 +18,7 @@ from nonebot.adapters.onebot.v11 import (
 require("nonebot_plugin_htmlrender")
 
 from .config import Config
-from .shindanmaker import make_shindan, get_shindan_title
+from .shindanmaker import make_shindan, get_shindan_title, render_shindan_list
 from .shindan_list import add_shindan, del_shindan, set_shindan, get_shindan_list
 
 __plugin_meta__ = PluginMetadata(
@@ -30,7 +30,7 @@ __plugin_meta__ = PluginMetadata(
         "unique_name": "shindan",
         "example": "人设生成 小Q",
         "author": "meetwq <meetwq@gmail.com>",
-        "version": "0.2.7",
+        "version": "0.2.8",
     },
 )
 
@@ -68,10 +68,13 @@ async def _():
     if not sd_list:
         await cmd_ls.finish("尚未添加任何占卜")
 
-    await cmd_ls.finish(
-        f"可用占卜：\n"
-        + "\n".join([f"{s['command']}（{s['title']}）" for s in sd_list.values()])
+    img = await render_shindan_list(
+        [
+            {"id": id, "command": s["command"], "title": s["title"]}
+            for id, s in sd_list.items()
+        ]
     )
+    await cmd_ls.finish(MessageSegment.image(img))
 
 
 @cmd_add.handle()

@@ -4,7 +4,7 @@ import httpx
 import jinja2
 from pathlib import Path
 from bs4 import BeautifulSoup, Tag
-from typing import Tuple, Union
+from typing import List, Tuple, Union
 
 from nonebot import get_driver
 from nonebot_plugin_htmlrender import html_to_pic
@@ -102,3 +102,13 @@ async def render_html(content: str) -> Tuple[str, bool]:
         result_js=result_js, title=title, result=result, has_chart=has_chart
     )
     return html, has_chart
+
+
+async def render_shindan_list(sd_list: List[dict]) -> bytes:
+    tpl = env.get_template("shindan_list.html")
+    html = await tpl.render_async(shindan_list=sd_list)
+    return await html_to_pic(
+        html,
+        template_path=f"file://{tpl_path.absolute()}",
+        viewport={"width": 100, "height": 100},
+    )
