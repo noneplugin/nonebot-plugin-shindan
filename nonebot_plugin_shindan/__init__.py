@@ -6,7 +6,7 @@ from nonebot.rule import Rule, to_me
 from nonebot.permission import SUPERUSER
 from nonebot.plugin import PluginMetadata
 from nonebot import on_command, on_message, require
-from nonebot.params import CommandArg, EventMessage, EventPlainText, State
+from nonebot.params import CommandArg, EventMessage, EventPlainText
 from nonebot.adapters.onebot.v11 import (
     Bot,
     MessageEvent,
@@ -30,7 +30,7 @@ __plugin_meta__ = PluginMetadata(
         "unique_name": "shindan",
         "example": "人设生成 小Q",
         "author": "meetwq <meetwq@gmail.com>",
-        "version": "0.2.8",
+        "version": "0.2.9",
     },
 )
 
@@ -145,9 +145,9 @@ def sd_handler() -> Rule:
     async def handle(
         bot: Bot,
         event: MessageEvent,
+        state: T_State,
         msg: Message = EventMessage(),
         msg_text: str = EventPlainText(),
-        state: T_State = State(),
     ) -> bool:
         async def get_name(command: str) -> str:
             name = ""
@@ -186,7 +186,7 @@ sd_matcher = on_message(sd_handler(), priority=13)
 
 
 @sd_matcher.handle()
-async def _(state: T_State = State()):
+async def _(state: T_State):
     id: str = state["id"]
     name: str = state["name"]
     mode: str = state["mode"]
