@@ -93,7 +93,7 @@ async def make_shindan(id: str, name: str, mode="image") -> Union[str, bytes]:
 async def render_html(content: str) -> Tuple[str, bool]:
     dom = BeautifulSoup(content, "lxml")
     result_js = str(dom.find("script", string=re.compile(r"saveResult")))
-    title = str(dom.find("div", class_="shindanTitleDescBlock"))
+    title = str(dom.find("h1", {"id": "shindanResultAbove"}))
     result = str(dom.find("div", {"id": "shindanResultBlock"}))
     has_chart = "chart.js" in content
 
