@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "nonebot_plugin_shindan"
-version = "0.2.10"
+version = "0.2.11"
 description = "Nonebot2 plugin for using ShindanMaker"
 authors = ["meetwq <meetwq@gmail.com>"]
 license = "MIT"
 readme = "README.md"
-homepage = "https://github.com/MeetWq/nonebot-plugin-shindan"
-repository = "https://github.com/MeetWq/nonebot-plugin-shindan"
+homepage = "https://github.com/noneplugin/nonebot-plugin-shindan"
+repository = "https://github.com/noneplugin/nonebot-plugin-shindan"
 
 [tool.poetry.dependencies]
 python = "^3.7.3"
