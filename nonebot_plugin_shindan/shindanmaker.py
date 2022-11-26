@@ -74,12 +74,12 @@ async def make_shindan(id: str, name: str, mode="image") -> Union[str, bytes]:
     content = resp.text
     if mode == "image":
         html, has_chart = await render_html(content)
-        html = html.replace(name + seed, name)
+        html = html.replace(seed, "")
         return await html_to_pic(
             html,
             template_path=f"file://{tpl_path.absolute()}",
             wait=2000 if has_chart else 0,
-            viewport={"width": 800, "height": 100},
+            viewport={"width": 750, "height": 100},
         )
     else:
         dom = BeautifulSoup(content, "lxml")
@@ -87,7 +87,7 @@ async def make_shindan(id: str, name: str, mode="image") -> Union[str, bytes]:
         assert isinstance(result, Tag)
         for img in result.find_all("img"):
             img.replace_with(img["src"])
-        return result.text.replace(name + seed, name)
+        return result.text.replace(seed, "")
 
 
 async def render_html(content: str) -> Tuple[str, bool]:
