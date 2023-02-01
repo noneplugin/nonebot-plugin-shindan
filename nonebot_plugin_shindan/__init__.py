@@ -21,16 +21,21 @@ from nonebot.adapters.onebot.v12 import Message as V12Msg
 from nonebot.adapters.onebot.v12 import MessageSegment as V12MsgSeg
 from nonebot.adapters.onebot.v12 import MessageEvent as V12MEvent
 
+require("nonebot_plugin_datastore")
 require("nonebot_plugin_htmlrender")
 
+from nonebot_plugin_datastore.db import post_db_init
+
 from .config import Config
-from .shindan_list import add_shindan, del_shindan, set_shindan, get_shindan_list
+from .manager import shindan_manager
 from .shindanmaker import (
     make_shindan,
     get_shindan_title,
     render_shindan_list,
     download_image,
 )
+
+post_db_init(shindan_manager.load_shindan_records)
 
 __plugin_meta__ = PluginMetadata(
     name="趣味占卜",
@@ -41,7 +46,7 @@ __plugin_meta__ = PluginMetadata(
         "unique_name": "shindan",
         "example": "人设生成 小Q",
         "author": "meetwq <meetwq@gmail.com>",
-        "version": "0.2.12",
+        "version": "0.3.0",
     },
 )
 
@@ -74,17 +79,10 @@ async def _():
 
 @cmd_ls.handle()
 async def _(bot: Union[V11Bot, V12Bot]):
-    sd_list = get_shindan_list()
-
-    if not sd_list:
+    if not shindan_manager.shindan_records:
         await cmd_ls.finish("尚未添加任何占卜")
 
-    img = await render_shindan_list(
-        [
-            {"id": id, "command": s["command"], "title": s["title"]}
-            for id, s in sd_list.items()
-        ]
-    )
+    img = await render_shindan_list(shindan_manager.shindan_records)
 
     if isinstance(bot, V11Bot):
         await cmd_ls.finish(V11MsgSeg.image(img))
@@ -110,13 +108,9 @@ async def _(msg: Union[V11Msg, V12Msg] = CommandArg()):
     if not title:
         await cmd_add.finish("找不到该占卜，请检查id")
 
-    sd_list = get_shindan_list()
-    if id in sd_list:
-        await cmd_add.finish("该占卜已存在")
-    if command in sd_list.values():
-        await cmd_add.finish("该指令已存在")
-
-    if add_shindan(id, command, title):
+    if resp := await shindan_manager.add_shindan(id, command, title):
+        await cmd_add.finish(resp)
+    else:
         await cmd_add.finish(f"成功添加占卜“{title}”，可通过“{command} 名字”使用")
 
 
@@ -130,11 +124,10 @@ async def _(msg: Union[V11Msg, V12Msg] = CommandArg()):
         await cmd_del.finish(del_usage)
 
     id = arg
-    sd_list = get_shindan_list()
-    if id not in sd_list:
-        await cmd_del.finish("不存在该占卜")
 
-    if del_shindan(id):
+    if resp := await shindan_manager.remove_shindan(id):
+        await cmd_add.finish(resp)
+    else:
         await cmd_del.finish("成功删除该占卜")
 
 
@@ -150,11 +143,10 @@ async def _(msg: Union[V11Msg, V12Msg] = CommandArg()):
 
     id = args[0]
     mode = args[1]
-    sd_list = get_shindan_list()
-    if id not in sd_list:
-        await cmd_set.finish("不存在该占卜")
 
-    if set_shindan(id, mode):
+    if resp := await shindan_manager.set_shindan_mode(id, mode):
+        await cmd_add.finish(resp)
+    else:
         await cmd_set.finish("设置成功")
 
 
@@ -200,17 +192,16 @@ def sd_handler() -> Rule:
 
             return name or ""
 
-        sd_list = get_shindan_list()
-        sd_list = sorted(
-            sd_list.items(), reverse=True, key=lambda items: items[1]["command"]
-        )
-        for id, s in sd_list:
-            command = s["command"]
-            if msg_text.startswith(command):
-                name = await get_name(command)
-                state["id"] = id
+        for record in sorted(
+            shindan_manager.shindan_records,
+            reverse=True,
+            key=lambda record: record.command,
+        ):
+            if msg_text.startswith(record.command):
+                name = await get_name(record.command)
+                state["id"] = record.shindan_id
                 state["name"] = name
-                state["mode"] = s.get("mode", "image")
+                state["mode"] = record.mode
                 return True
         return False
 

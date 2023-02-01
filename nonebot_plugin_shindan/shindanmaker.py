@@ -10,6 +10,7 @@ from nonebot import get_driver
 from nonebot_plugin_htmlrender import html_to_pic
 
 from .config import Config
+from .model import ShindanRecord
 
 shindan_config = Config.parse_obj(get_driver().config.dict())
 
@@ -122,9 +123,9 @@ async def render_html(content: str) -> Tuple[str, bool]:
     return html, has_chart
 
 
-async def render_shindan_list(sd_list: List[dict]) -> bytes:
+async def render_shindan_list(shindan_records: List[ShindanRecord]) -> bytes:
     tpl = env.get_template("shindan_list.html")
-    html = await tpl.render_async(shindan_list=sd_list)
+    html = await tpl.render_async(shindan_records=shindan_records)
     return await html_to_pic(
         html,
         template_path=f"file://{tpl_path.absolute()}",
