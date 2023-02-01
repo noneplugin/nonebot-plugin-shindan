@@ -47,6 +47,12 @@ async def post(client: httpx.AsyncClient, url: str, **kwargs):
     return await client.post(url, headers=headers, timeout=20, **kwargs)
 
 
+async def download_image(url: str) -> bytes:
+    async with httpx.AsyncClient() as client:
+        resp = await get(client, url)
+        return resp.read()
+
+
 async def get_shindan_title(id: str) -> str:
     url = f"https://shindanmaker.com/{id}"
     async with httpx.AsyncClient() as client:
