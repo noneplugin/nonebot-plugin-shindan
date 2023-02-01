@@ -90,11 +90,23 @@ async def make_shindan(id: str, name: str, mode="image") -> Union[str, bytes]:
         return result.text.replace(seed, "")
 
 
+def remove_shindan_effects(content: Tag, type: str):
+    for tag in content.find_all("span", {"class": "shindanEffects", "data-mode": type}):
+        assert isinstance(tag, Tag)
+        if noscript := tag.find_next("noscript"):
+            noscript.replace_with_children()
+            tag.extract()
+
+
 async def render_html(content: str) -> Tuple[str, bool]:
     dom = BeautifulSoup(content, "lxml")
     result_js = str(dom.find("script", string=re.compile(r"saveResult")))
     title = str(dom.find("h1", {"id": "shindanResultAbove"}))
-    result = str(dom.find("div", {"id": "shindanResultBlock"}))
+    result = dom.find("div", {"id": "shindanResultBlock"})
+    assert isinstance(result, Tag)
+    remove_shindan_effects(result, "ef_shuffle")
+    remove_shindan_effects(result, "ef_typing")
+    result = str(result)
     has_chart = "chart.js" in content
 
     shindan_tpl = env.get_template("shindan.html")
