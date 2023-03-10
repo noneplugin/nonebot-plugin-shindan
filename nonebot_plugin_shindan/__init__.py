@@ -2,24 +2,22 @@ import re
 import traceback
 from typing import List, Union
 
-from nonebot.log import logger
-from nonebot.typing import T_State
-from nonebot.rule import Rule, to_me
-from nonebot.permission import SUPERUSER
-from nonebot.plugin import PluginMetadata
 from nonebot import on_command, on_message, require
-from nonebot.params import CommandArg, EventMessage, EventPlainText
-
 from nonebot.adapters.onebot.v11 import Bot as V11Bot
-from nonebot.adapters.onebot.v11 import Message as V11Msg
-from nonebot.adapters.onebot.v11 import MessageSegment as V11MsgSeg
-from nonebot.adapters.onebot.v11 import MessageEvent as V11MEvent
 from nonebot.adapters.onebot.v11 import GroupMessageEvent as V11GMEvent
-
+from nonebot.adapters.onebot.v11 import Message as V11Msg
+from nonebot.adapters.onebot.v11 import MessageEvent as V11MEvent
+from nonebot.adapters.onebot.v11 import MessageSegment as V11MsgSeg
 from nonebot.adapters.onebot.v12 import Bot as V12Bot
 from nonebot.adapters.onebot.v12 import Message as V12Msg
-from nonebot.adapters.onebot.v12 import MessageSegment as V12MsgSeg
 from nonebot.adapters.onebot.v12 import MessageEvent as V12MEvent
+from nonebot.adapters.onebot.v12 import MessageSegment as V12MsgSeg
+from nonebot.log import logger
+from nonebot.params import CommandArg, EventMessage, EventPlainText
+from nonebot.permission import SUPERUSER
+from nonebot.plugin import PluginMetadata
+from nonebot.rule import Rule, to_me
+from nonebot.typing import T_State
 
 require("nonebot_plugin_datastore")
 require("nonebot_plugin_htmlrender")
@@ -29,10 +27,10 @@ from nonebot_plugin_datastore.db import post_db_init
 from .config import Config
 from .manager import shindan_manager
 from .shindanmaker import (
-    make_shindan,
-    get_shindan_title,
-    render_shindan_list,
     download_image,
+    get_shindan_title,
+    make_shindan,
+    render_shindan_list,
 )
 
 post_db_init(shindan_manager.load_shindan_records)
@@ -46,7 +44,7 @@ __plugin_meta__ = PluginMetadata(
         "unique_name": "shindan",
         "example": "人设生成 小Q",
         "author": "meetwq <meetwq@gmail.com>",
-        "version": "0.3.0",
+        "version": "0.3.1",
     },
 )
 

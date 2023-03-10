@@ -1,19 +1,19 @@
-from sqlmodel import select
-from typing import List, Optional
+from typing import Optional, Sequence
 
 from nonebot_plugin_datastore import create_session
+from sqlalchemy import select
 
 from .model import ShindanRecord
 
 
 class ShindanManager:
     def __init__(self):
-        self.shindan_records: List[ShindanRecord] = []
+        self.shindan_records: Sequence[ShindanRecord] = []
 
     async def load_shindan_records(self):
         async with create_session() as session:
             statement = select(ShindanRecord)
-            self.shindan_records = (await session.exec(statement)).all()  # type: ignore
+            self.shindan_records = (await session.scalars(statement)).all()
 
     async def add_shindan(
         self, shindan_id: str, command: str, title: str, mode: str = "image"

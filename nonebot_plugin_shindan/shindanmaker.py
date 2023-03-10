@@ -1,11 +1,11 @@
 import re
 import time
+from pathlib import Path
+from typing import Sequence, Tuple, Union
+
 import httpx
 import jinja2
-from pathlib import Path
 from bs4 import BeautifulSoup, Tag
-from typing import List, Tuple, Union
-
 from nonebot import get_driver
 from nonebot_plugin_htmlrender import html_to_pic
 
@@ -123,7 +123,7 @@ async def render_html(content: str) -> Tuple[str, bool]:
     return html, has_chart
 
 
-async def render_shindan_list(shindan_records: List[ShindanRecord]) -> bytes:
+async def render_shindan_list(shindan_records: Sequence[ShindanRecord]) -> bytes:
     tpl = env.get_template("shindan_list.html")
     html = await tpl.render_async(shindan_records=shindan_records)
     return await html_to_pic(
