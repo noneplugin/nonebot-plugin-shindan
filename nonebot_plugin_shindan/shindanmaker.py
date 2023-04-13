@@ -40,12 +40,20 @@ if shindan_config.shindanmaker_cookie:
 
 @retry
 async def get(client: httpx.AsyncClient, url: str, **kwargs):
-    return await client.get(url, headers=headers, timeout=20, **kwargs)
+    resp = await client.get(
+        url, headers=headers, timeout=20, follow_redirects=True, **kwargs
+    )
+    resp.raise_for_status()
+    return resp
 
 
 @retry
 async def post(client: httpx.AsyncClient, url: str, **kwargs):
-    return await client.post(url, headers=headers, timeout=20, **kwargs)
+    resp = await client.post(
+        url, headers=headers, timeout=20, follow_redirects=True, **kwargs
+    )
+    resp.raise_for_status()
+    return resp
 
 
 async def download_image(url: str) -> bytes:
@@ -58,8 +66,6 @@ async def get_shindan_title(id: str) -> str:
     url = f"https://shindanmaker.com/{id}"
     async with httpx.AsyncClient() as client:
         resp = await get(client, url)
-        if resp.status_code == 302:
-            resp = await get(client, resp.headers["location"])
         dom = BeautifulSoup(resp.text, "lxml")
         title = dom.find("h1", {"id": "shindanTitle"})
         assert title
@@ -71,11 +77,14 @@ async def make_shindan(id: str, name: str, mode="image") -> Union[str, bytes]:
     seed = time.strftime("%y%m%d", time.localtime())
     async with httpx.AsyncClient() as client:
         resp = await get(client, url)
-        if resp.status_code == 302:
-            resp = await get(client, resp.headers["location"])
         dom = BeautifulSoup(resp.text, "lxml")
         token = dom.find("form", {"id": "shindanForm"}).find("input")["value"]  # type: ignore
-        payload = {"_token": token, "shindanName": name + seed, "hiddenName": "名無しのR"}
+        payload = {
+            "_token": token,
+            "shindanName": name + seed,
+            "hiddenName": "名無しのR",
+            "type": "name",
+        }
         resp = await post(client, url, json=payload)
 
     content = resp.text
