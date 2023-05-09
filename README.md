@@ -40,7 +40,9 @@ pip install nonebot_plugin_shindan
 
 发送 “/占卜列表” 可以查看上述列表；
 
-超级用户可以发送 “/添加占卜 id 指令”、“/删除占卜 id” 增删占卜列表，可以发送 “/设置占卜 id image/text”设置输出形式
+**超级用户** 可以发送 “/添加占卜 id 指令”、“/删除占卜 id” 增删占卜列表，可以发送 “/设置占卜 id image/text”设置输出形式
+
+超级用户设置方式：[Nonebot 超级用户配置](https://v2.nonebot.dev/docs/appendices/config#superusers)
 
 对于需要登录推特的占卜，可以在 `.env.xxx` 文件中添加 ShindanMaker cookie：
 
