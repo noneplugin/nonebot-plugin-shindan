@@ -1,25 +1,28 @@
 import re
 import traceback
-from typing import List, Optional, Union
+from typing import List, Union
 
 from nonebot import on_command, on_message, require
 from nonebot.adapters import Bot, Event, Message
 from nonebot.log import logger
 from nonebot.matcher import Matcher
-from nonebot.params import CommandArg, EventMessage, EventPlainText
+from nonebot.params import CommandArg, EventPlainText
 from nonebot.permission import SUPERUSER
-from nonebot.plugin import PluginMetadata
+from nonebot.plugin import PluginMetadata, inherit_supported_adapters
 from nonebot.rule import Rule, to_me
 from nonebot.typing import T_State
 
-require("nonebot_plugin_datastore")
+require("nonebot_plugin_orm")
 require("nonebot_plugin_htmlrender")
 require("nonebot_plugin_saa")
+require("nonebot_plugin_userinfo")
+require("nonebot_plugin_alconna")
 
-from nonebot_plugin_datastore.db import post_db_init
+from nonebot_plugin_alconna import At, UniMsg
 from nonebot_plugin_saa import Image, MessageFactory
-from nonebot_plugin_saa import __plugin_meta__ as saa_plugin_meta
+from nonebot_plugin_userinfo import get_user_info
 
+from . import migrations
 from .config import Config
 from .manager import shindan_manager
 from .shindanmaker import (
@@ -29,8 +32,6 @@ from .shindanmaker import (
     render_shindan_list,
 )
 
-post_db_init(shindan_manager.load_shindan_records)
-
 __plugin_meta__ = PluginMetadata(
     name="趣味占卜",
     description="使用ShindanMaker网站的趣味占卜",
@@ -38,12 +39,15 @@ __plugin_meta__ = PluginMetadata(
     type="application",
     homepage="https://github.com/noneplugin/nonebot-plugin-shindan",
     config=Config,
-    supported_adapters=saa_plugin_meta.supported_adapters,
+    supported_adapters=inherit_supported_adapters(
+        "nonebot_plugin_saa", "nonebot_plugin_userinfo", "nonebot_plugin_alconna"
+    ),
     extra={
         "unique_name": "shindan",
         "example": "人设生成 小Q",
         "author": "meetwq <meetwq@gmail.com>",
-        "version": "0.4.1",
+        "version": "0.5.0",
+        "orm_version_location": migrations,
     },
 )
 
@@ -142,44 +146,20 @@ async def _(matcher: Matcher, msg: Message = CommandArg()):
         await matcher.finish("设置成功")
 
 
-try:
-    from .onebot import get_mention_username, get_sender_username
-except ImportError:
-    get_mention_username = None
-    get_sender_username = None
-
-
 def sd_handler() -> Rule:
     async def handle(
-        bot: Bot,
-        event: Event,
         state: T_State,
-        msg: Message = EventMessage(),
         msg_text: str = EventPlainText(),
     ) -> bool:
-        async def get_name(command: str) -> Optional[str]:
-            name = None
-            if get_mention_username:
-                name = await get_mention_username(bot, event, msg)
-
-            if not name:
-                name = msg_text[len(command) :].strip()
-
-            if not name and get_sender_username:
-                name = await get_sender_username(bot, event)
-
-            return name
-
         for record in sorted(
             shindan_manager.shindan_records,
             reverse=True,
             key=lambda record: record.command,
         ):
             if msg_text.startswith(record.command):
-                name = await get_name(record.command)
                 state["id"] = record.shindan_id
-                state["name"] = name
                 state["mode"] = record.mode
+                state["command"] = record.command
                 return True
         return False
 
@@ -190,10 +170,30 @@ sd_matcher = on_message(sd_handler(), priority=13)
 
 
 @sd_matcher.handle()
-async def _(state: T_State, matcher: Matcher):
+async def _(
+    bot: Bot,
+    event: Event,
+    state: T_State,
+    matcher: Matcher,
+    uni_msg: UniMsg,
+    msg_text: str = EventPlainText(),
+):
     id: str = state["id"]
-    name: Optional[str] = state["name"]
     mode: str = state["mode"]
+    command: str = state["command"]
+
+    name = None
+    if uni_msg.has(At):
+        at_seg = uni_msg[At, 0]
+        if user_info := await get_user_info(bot, event, at_seg.target):
+            name = user_info.user_displayname or user_info.user_name
+
+    if not name:
+        name = msg_text[len(command) :].strip()
+
+    if not name:
+        if user_info := await get_user_info(bot, event, event.get_user_id()):
+            name = user_info.user_displayname or user_info.user_name
 
     if name is None:
         await matcher.finish("无法获取名字，请加上名字再试")
