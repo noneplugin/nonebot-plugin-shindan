@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nonebot_plugin_shindan"
-version = "0.5.0"
+version = "0.5.1"
 description = "Nonebot2 plugin for using ShindanMaker"
 authors = ["meetwq <meetwq@gmail.com>"]
 license = "MIT"
@@ -13,7 +13,7 @@ python = "^3.8"
 nonebot2 = { version = "^2.0.1", extras = ["fastapi"] }
 nonebot-plugin-send-anything-anywhere = "^0.3.0"
 nonebot-plugin-htmlrender = "^0.2.0"
-nonebot-plugin-orm = "^0.2.3"
+nonebot-plugin-orm = ">=0.3.0,<1.0.0"
 nonebot-plugin-userinfo = "^0.1.2"
 nonebot-plugin-alconna = ">=0.19.2"
 httpx = ">=0.19.0,<1.0.0"
@@ -23,7 +23,7 @@ beautifulsoup4 = "^4.0.0"
 
 [tool.poetry.group.dev.dependencies]
 nb-cli = "^1.0.0"
-nonebot-plugin-orm = { version = "^0.2.3", extras = ["default"] }
+nonebot-plugin-orm = { version = ">=0.3.0,<1.0.0", extras = ["default"] }
 nonebot-plugin-datastore = "^1.0.0"
 
 [tool.nonebot]
