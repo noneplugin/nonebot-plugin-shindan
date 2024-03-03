@@ -1,18 +1,15 @@
 import re
 import time
 from pathlib import Path
-from typing import Sequence, Tuple, Union
+from typing import List, Tuple, Union
 
 import httpx
 import jinja2
 from bs4 import BeautifulSoup, Tag
-from nonebot import get_driver
 from nonebot_plugin_htmlrender import html_to_pic
 
-from .config import Config
-from .model import ShindanRecord
-
-shindan_config = Config.parse_obj(get_driver().config.dict())
+from .config import shindan_config
+from .model import ShindanConfig
 
 tpl_path = Path(__file__).parent / "templates"
 env = jinja2.Environment(loader=jinja2.FileSystemLoader(tpl_path), enable_async=True)
@@ -23,7 +20,7 @@ def retry(func):
         for i in range(3):
             try:
                 return await func(*args, **kwargs)
-            except:
+            except Exception:
                 continue
         raise
 
@@ -32,8 +29,9 @@ def retry(func):
 
 headers = {
     "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-        "(KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/96.0.4664.110 Safari/537.36"
     )
 }
 
@@ -65,7 +63,7 @@ async def download_image(url: str) -> bytes:
         return resp.read()
 
 
-async def get_shindan_title(id: str) -> str:
+async def get_shindan_title(id: int) -> str:
     url = f"https://shindanmaker.com/{id}"
     async with httpx.AsyncClient() as client:
         resp = await get(client, url)
@@ -75,7 +73,7 @@ async def get_shindan_title(id: str) -> str:
         return title.text
 
 
-async def make_shindan(id: str, name: str, mode="image") -> Union[str, bytes]:
+async def make_shindan(id: int, name: str, mode="image") -> Union[str, bytes]:
     url = f"https://shindanmaker.com/{id}"
     seed = time.strftime("%y%m%d", time.localtime())
     async with httpx.AsyncClient() as client:
@@ -138,7 +136,7 @@ async def render_html(content: str) -> Tuple[str, bool]:
     return html, has_chart
 
 
-async def render_shindan_list(shindan_records: Sequence[ShindanRecord]) -> bytes:
+async def render_shindan_list(shindan_records: List[ShindanConfig]) -> bytes:
     tpl = env.get_template("shindan_list.html")
     html = await tpl.render_async(shindan_records=shindan_records)
     return await html_to_pic(

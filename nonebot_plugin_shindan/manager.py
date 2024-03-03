@@ -1,70 +1,58 @@
-from typing import Optional, Sequence
+from typing import List, Optional
 
-from nonebot import get_driver
 from nonebot_plugin_orm import get_session
 from sqlalchemy import select
 
-from .model import ShindanRecord
+from .model import ShindanConfig, ShindanRecord
 
 
 class ShindanManager:
     def __init__(self):
-        self.shindan_records: Sequence[ShindanRecord] = []
+        self.shindan_list: List[ShindanConfig] = []
 
-    async def load_shindan_records(self):
+    async def load_shindan(self):
         async with get_session() as session:
             statement = select(ShindanRecord)
-            self.shindan_records = (await session.scalars(statement)).all()
+            shindan_records = (await session.scalars(statement)).all()
+            self.shindan_list = [record.config for record in shindan_records]
 
-    async def add_shindan(
-        self, shindan_id: str, command: str, title: str, mode: str = "image"
-    ) -> Optional[str]:
-        for record in self.shindan_records:
-            if shindan_id == record.shindan_id:
-                return "该占卜已存在"
-            if command == record.command:
-                return "该指令已存在"
+    async def add_shindan(self, id: int, command: str, title: str, mode: str = "image"):
         async with get_session() as session:
             record = ShindanRecord(
-                shindan_id=shindan_id, command=command, title=title, mode=mode
+                shindan_id=id, command=command, title=title, mode=mode
             )
             session.add(record)
             await session.commit()
-        await self.load_shindan_records()
+        await self.load_shindan()
 
-    async def remove_shindan(self, shindan_id: str) -> Optional[str]:
-        if shindan_id not in [record.shindan_id for record in self.shindan_records]:
-            return "不存在该占卜"
+    async def remove_shindan(self, id: int):
         async with get_session() as session:
-            statement = select(ShindanRecord).where(
-                ShindanRecord.shindan_id == shindan_id
-            )
-            record: Optional[ShindanRecord] = await session.scalar(statement)
-            if record:
+            statement = select(ShindanRecord).where(ShindanRecord.shindan_id == id)
+            if record := await session.scalar(statement):
                 await session.delete(record)
                 await session.commit()
-        await self.load_shindan_records()
+        await self.load_shindan()
 
-    async def set_shindan_mode(self, shindan_id: str, mode: str) -> Optional[str]:
-        if shindan_id not in [record.shindan_id for record in self.shindan_records]:
-            return "不存在该占卜"
+    async def set_shindan(
+        self,
+        id: int,
+        *,
+        command: Optional[str] = None,
+        title: Optional[str] = None,
+        mode: Optional[str] = None,
+    ):
         async with get_session() as session:
-            statement = select(ShindanRecord).where(
-                ShindanRecord.shindan_id == shindan_id
-            )
-            record: Optional[ShindanRecord] = await session.scalar(statement)
-            if record:
-                record.mode = mode
+            statement = select(ShindanRecord).where(ShindanRecord.shindan_id == id)
+            if record := await session.scalar(statement):
+                if command:
+                    record.command = command
+                if title:
+                    record.title = title
+                if mode:
+                    record.mode = mode
                 session.add(record)
                 await session.commit()
-        await self.load_shindan_records()
+        await self.load_shindan()
 
 
 shindan_manager = ShindanManager()
-
-driver = get_driver()
-
-
-@driver.on_startup
-async def _():
-    await shindan_manager.load_shindan_records()

@@ -38,11 +38,22 @@ pip install nonebot_plugin_shindan
 
 发送 “占卜指令 名字” 即可，如：`人设生成 小Q`
 
-发送 “/占卜列表” 可以查看上述列表；
+**以下命令需要加[命令前缀](https://nonebot.dev/docs/appendices/config#command-start-和-command-separator) (默认为`/`)，可自行设置为空**
 
-**超级用户** 可以发送 “/添加占卜 id 指令”、“/删除占卜 id” 增删占卜列表，可以发送 “/设置占卜 id image/text”设置输出形式
+发送 “占卜列表” 可以查看上述列表；
+
+#### **超级用户** 可用的命令：
 
 超级用户设置方式：[Nonebot 超级用户配置](https://nonebot.dev/docs/appendices/config#superusers)
+
+发送 “添加占卜 id 指令” 添加占卜
+
+发送 “删除占卜 id” 删除占卜
+
+发送 “设置占卜指令 id 指令” 设置占卜指令
+
+发送 “设置占卜模式 id text/image” 设置占卜输出形式
+
 
 对于需要登录推特的占卜，可以在 `.env.xxx` 文件中添加 ShindanMaker cookie：
 
