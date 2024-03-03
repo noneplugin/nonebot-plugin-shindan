@@ -15,18 +15,6 @@ tpl_path = Path(__file__).parent / "templates"
 env = jinja2.Environment(loader=jinja2.FileSystemLoader(tpl_path), enable_async=True)
 
 
-def retry(func):
-    async def wrapper(*args, **kwargs):
-        for i in range(3):
-            try:
-                return await func(*args, **kwargs)
-            except Exception:
-                continue
-        raise
-
-    return wrapper
-
-
 headers = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -39,22 +27,20 @@ if shindan_config.shindanmaker_cookie:
     headers["cookie"] = shindan_config.shindanmaker_cookie
 
 
-@retry
+async def request(client: httpx.AsyncClient, method: str, url: str, **kwargs):
+    resp = await client.request(
+        method, url, headers=headers, timeout=20, follow_redirects=True, **kwargs
+    )
+    resp.raise_for_status()
+    return resp
+
+
 async def get(client: httpx.AsyncClient, url: str, **kwargs):
-    resp = await client.get(
-        url, headers=headers, timeout=20, follow_redirects=True, **kwargs
-    )
-    resp.raise_for_status()
-    return resp
+    return await request(client, "GET", url, **kwargs)
 
 
-@retry
 async def post(client: httpx.AsyncClient, url: str, **kwargs):
-    resp = await client.post(
-        url, headers=headers, timeout=20, follow_redirects=True, **kwargs
-    )
-    resp.raise_for_status()
-    return resp
+    return await request(client, "POST", url, **kwargs)
 
 
 async def download_image(url: str) -> bytes:

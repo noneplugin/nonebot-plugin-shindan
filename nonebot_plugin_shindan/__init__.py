@@ -1,6 +1,6 @@
 import re
 import traceback
-from typing import List, Optional, Type, Union
+from typing import List, Optional, Type
 
 from nonebot import get_driver, require
 from nonebot.adapters import Bot, Event
@@ -173,31 +173,21 @@ def shindan_handler(shindan: ShindanConfig) -> T_Handler:
             logger.warning(traceback.format_exc())
             await matcher.finish("出错了，请稍后再试")
 
-        msgs: List[Union[str, bytes]] = []
+        msg = UniMessage()
         if isinstance(res, str):
             img_pattern = r"((?:http|https)://\S+\.(?:jpg|jpeg|png|gif|bmp|webp))"
-            for msg in re.split(img_pattern, res):
-                if re.match(img_pattern, msg):
+            for text in re.split(img_pattern, res):
+                if re.match(img_pattern, text):
                     try:
-                        img = await download_image(msg)
-                        msgs.append(img)
+                        img = await download_image(text)
+                        msg += Image(raw=img)
                     except Exception:
-                        logger.warning(f"{msg} 下载出错！")
+                        logger.warning(f"{text} 下载出错！")
                 else:
-                    msgs.append(msg)
-        elif isinstance(res, bytes):
-            msgs.append(res)
-
-        if not msgs:
-            await matcher.finish()
-
-        uni_msg = UniMessage()
-        for msg in msgs:
-            if isinstance(msg, bytes):
-                uni_msg += Image(raw=msg)
-            else:
-                uni_msg += msg
-        await uni_msg.send()
+                    msg += text
+        else:
+            msg += Image(raw=res)
+        await msg.send()
 
     return handler
 
