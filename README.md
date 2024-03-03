@@ -40,7 +40,12 @@ pip install nonebot_plugin_shindan
 
 **以下命令需要加[命令前缀](https://nonebot.dev/docs/appendices/config#command-start-和-command-separator) (默认为`/`)，可自行设置为空**
 
-发送 “占卜列表” 可以查看上述列表；
+发送 “占卜列表” 可以查看如下列表；
+
+<div align="left">
+  <img src="https://s2.loli.net/2024/03/04/2or48fjK3ECS7Iy.png" width="500" />
+</div>
+
 
 #### **超级用户** 可用的命令：
 
