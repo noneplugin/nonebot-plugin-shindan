@@ -136,9 +136,9 @@ async def render_html(content: str) -> Tuple[str, bool]:
     return html, has_chart
 
 
-async def render_shindan_list(shindan_records: List[ShindanConfig]) -> bytes:
+async def render_shindan_list(shindan_list: List[ShindanConfig]) -> bytes:
     tpl = env.get_template("shindan_list.html")
-    html = await tpl.render_async(shindan_records=shindan_records)
+    html = await tpl.render_async(shindan_list=shindan_list)
     return await html_to_pic(
         html,
         template_path=f"file://{tpl_path.absolute()}",

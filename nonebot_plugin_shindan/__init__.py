@@ -16,6 +16,7 @@ require("nonebot_plugin_alconna")
 require("nonebot_plugin_userinfo")
 require("nonebot_plugin_htmlrender")
 
+from arclet.alconna import Field
 from nonebot_plugin_alconna import (
     Alconna,
     AlconnaMatcher,
@@ -25,6 +26,7 @@ from nonebot_plugin_alconna import (
     UniMessage,
     on_alconna,
 )
+from nonebot_plugin_alconna.model import CompConfig
 from nonebot_plugin_userinfo import get_user_info
 
 from . import migrations
@@ -55,48 +57,33 @@ __plugin_meta__ = PluginMetadata(
 )
 
 
-matcher_sd = on_alconna(
-    "占卜",
-    aliases={"shindan", "shindanmaker"},
-    rule=to_me(),
-    use_cmd_start=True,
-    block=True,
-    priority=13,
-)
-matcher_ls = on_alconna(
-    "占卜列表",
-    aliases={"可用占卜"},
-    use_cmd_start=True,
-    block=True,
-    priority=13,
-)
+params = {"use_cmd_start": True, "block": True, "priority": 13}
+
+matcher_sd = on_alconna("占卜", rule=to_me(), **params)
+matcher_ls = on_alconna("占卜列表", aliases={"可用占卜"}, **params)
+
+comp_config = CompConfig(disables={"tab", "enter"}, timeout=60)
+params_config = {"permission": SUPERUSER, "comp_config": comp_config, **params}
+
+args_id = Args["id", int, Field(completion=lambda: "占卜id")]
+args_cmd = Args["command", str, Field(completion=lambda: "占卜指令")]
+args_mode = Args["mode", ["text", "image"], Field(completion=lambda: "占卜输出形式")]
+
 matcher_add = on_alconna(
-    Alconna("添加占卜", Args["id", int], Args["command", str]),
-    permission=SUPERUSER,
-    use_cmd_start=True,
-    block=True,
-    priority=13,
+    Alconna("添加占卜", args_id, args_cmd),
+    **params_config,
 )
 matcher_del = on_alconna(
-    Alconna("删除占卜", Args["id", int]),
-    permission=SUPERUSER,
-    use_cmd_start=True,
-    block=True,
-    priority=13,
+    Alconna("删除占卜", args_id),
+    **params_config,
 )
-matcher_set_command = on_alconna(
-    Alconna("设置占卜指令", Args["id", int], Args["command", str]),
-    permission=SUPERUSER,
-    use_cmd_start=True,
-    block=True,
-    priority=13,
+matcher_set_cmd = on_alconna(
+    Alconna("设置占卜指令", args_id, args_cmd),
+    **params_config,
 )
 matcher_set_mode = on_alconna(
-    Alconna("设置占卜模式", Args["id", int], Args["mode", ["text", "image"]]),
-    permission=SUPERUSER,
-    use_cmd_start=True,
-    block=True,
-    priority=13,
+    Alconna("设置占卜模式", args_id, args_mode),
+    **params_config,
 )
 
 
@@ -141,7 +128,7 @@ async def _(matcher: Matcher, id: int):
     await matcher.finish("成功删除该占卜")
 
 
-@matcher_set_command.handle()
+@matcher_set_cmd.handle()
 async def _(matcher: Matcher, id: int, command: str):
     if id not in (shindan.id for shindan in shindan_manager.shindan_list):
         await matcher.finish("尚未添加该占卜")
