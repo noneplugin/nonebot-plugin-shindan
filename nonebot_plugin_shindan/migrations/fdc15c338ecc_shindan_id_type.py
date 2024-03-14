@@ -31,6 +31,7 @@ def upgrade(name: str = "") -> None:
             existing_type=sa.VARCHAR(length=32),
             type_=sa.Integer(),
             existing_nullable=False,
+            postgresql_using="shindan_id::integer",
         )
 
     # ### end Alembic commands ###
