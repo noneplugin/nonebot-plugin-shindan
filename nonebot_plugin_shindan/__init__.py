@@ -3,7 +3,7 @@ import traceback
 from typing import Optional
 
 from nonebot import get_driver, require
-from nonebot.adapters import Bot, Event
+from nonebot.adapters import Event
 from nonebot.log import logger
 from nonebot.matcher import Matcher
 from nonebot.permission import SUPERUSER
@@ -13,7 +13,7 @@ from nonebot.typing import T_Handler
 
 require("nonebot_plugin_orm")
 require("nonebot_plugin_alconna")
-require("nonebot_plugin_userinfo")
+require("nonebot_plugin_uninfo")
 require("nonebot_plugin_htmlrender")
 
 from arclet.alconna import Field
@@ -27,7 +27,7 @@ from nonebot_plugin_alconna import (
     on_alconna,
 )
 from nonebot_plugin_alconna.model import CompConfig
-from nonebot_plugin_userinfo import get_user_info
+from nonebot_plugin_uninfo import QryItrface
 
 from .config import Config
 from .manager import shindan_manager
@@ -47,7 +47,7 @@ __plugin_meta__ = PluginMetadata(
     homepage="https://github.com/noneplugin/nonebot-plugin-shindan",
     config=Config,
     supported_adapters=inherit_supported_adapters(
-        "nonebot_plugin_alconna", "nonebot_plugin_userinfo"
+        "nonebot_plugin_alconna", "nonebot_plugin_uninfo"
     ),
 )
 
@@ -145,21 +145,19 @@ async def _(matcher: Matcher, id: int, mode: str):
 
 def shindan_handler(shindan: ShindanConfig) -> T_Handler:
     async def handler(
-        bot: Bot,
         event: Event,
         matcher: Matcher,
+        interface: QryItrface,
         name: Optional[str] = None,
         at: Optional[At] = None,
     ):
-        if at and (user_info := await get_user_info(bot, event, at.target)):
-            name = user_info.user_displayname or user_info.user_name
+        if at and (user := await interface.get_user(at.target)):
+            name = user.nick or user.name
 
-        if not name and (
-            user_info := await get_user_info(bot, event, event.get_user_id())
-        ):
-            name = user_info.user_displayname or user_info.user_name
+        if not name and (user := await interface.get_user(event.get_user_id())):
+            name = user.nick or user.name
 
-        if name is None:
+        if not name:
             await matcher.finish("无法获取名字，请加上名字再试")
 
         try:
