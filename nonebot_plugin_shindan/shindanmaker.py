@@ -70,8 +70,8 @@ async def make_shindan(id: int, name: str, mode="image") -> Union[str, bytes]:
         shindan_token = form.find("input", {"name": "shindan_token"})["value"]  # type: ignore
         payload = {
             "_token": _token,
-            "shindanName": name + seed,
-            "hiddenName": "名無しのR",
+            "user_input_value_1": name + seed,
+            "randname": "名無しのR",
             "type": "name",
             "shindan_token": shindan_token,
         }
