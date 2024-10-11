@@ -1,6 +1,6 @@
 import re
 import traceback
-from typing import List, Optional, Type
+from typing import Optional
 
 from nonebot import get_driver, require
 from nonebot.adapters import Bot, Event
@@ -29,7 +29,6 @@ from nonebot_plugin_alconna import (
 from nonebot_plugin_alconna.model import CompConfig
 from nonebot_plugin_userinfo import get_user_info
 
-from . import migrations
 from .config import Config
 from .manager import shindan_manager
 from .model import ShindanConfig
@@ -50,10 +49,6 @@ __plugin_meta__ = PluginMetadata(
     supported_adapters=inherit_supported_adapters(
         "nonebot_plugin_alconna", "nonebot_plugin_userinfo"
     ),
-    extra={
-        "example": "人设生成 小Q",
-        "orm_version_location": migrations,
-    },
 )
 
 
@@ -192,7 +187,7 @@ def shindan_handler(shindan: ShindanConfig) -> T_Handler:
     return handler
 
 
-shindan_matchers: List[Type[AlconnaMatcher]] = []
+shindan_matchers: list[type[AlconnaMatcher]] = []
 
 
 def refresh_matchers():

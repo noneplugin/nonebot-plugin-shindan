@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from nonebot_plugin_orm import get_session
 from sqlalchemy import select
@@ -8,7 +8,7 @@ from .model import ShindanConfig, ShindanRecord
 
 class ShindanManager:
     def __init__(self):
-        self.shindan_list: List[ShindanConfig] = []
+        self.shindan_list: list[ShindanConfig] = []
 
     async def load_shindan(self):
         async with get_session() as session:

@@ -1,7 +1,7 @@
 import re
 import time
 from pathlib import Path
-from typing import List, Tuple, Union
+from typing import Union
 
 import httpx
 import jinja2
@@ -104,7 +104,7 @@ def remove_shindan_effects(content: Tag, type: str):
             tag.extract()
 
 
-async def render_html(content: str) -> Tuple[str, bool]:
+async def render_html(content: str) -> tuple[str, bool]:
     dom = BeautifulSoup(content, "lxml")
     result_js = str(dom.find("script", string=re.compile(r"savedShindanResult")))
     title = str(dom.find("h1", {"id": "shindanResultAbove"}))
@@ -122,7 +122,7 @@ async def render_html(content: str) -> Tuple[str, bool]:
     return html, has_chart
 
 
-async def render_shindan_list(shindan_list: List[ShindanConfig]) -> bytes:
+async def render_shindan_list(shindan_list: list[ShindanConfig]) -> bytes:
     tpl = env.get_template("shindan_list.html")
     html = await tpl.render_async(shindan_list=shindan_list)
     return await html_to_pic(
