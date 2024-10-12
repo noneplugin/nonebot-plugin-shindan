@@ -107,7 +107,7 @@ def remove_shindan_effects(content: Tag, type: str):
 async def render_html(content: str) -> tuple[str, bool]:
     dom = BeautifulSoup(content, "lxml")
     result_js = str(dom.find("script", string=re.compile(r"savedShindanResult")))
-    title = str(dom.find("h1", {"id": "shindanResultAbove"}))
+    title = str(dom.find("h1", {"id": "shindanResultAbove"})) if dom.find("h1", {"id": "shindanResultAbove"}) else str(dom.find("div", {"class": "shindanTitleImageContainer"}))
     result = dom.find("div", {"id": "shindanResultBlock"})
     assert isinstance(result, Tag)
     remove_shindan_effects(result, "ef_shuffle")
