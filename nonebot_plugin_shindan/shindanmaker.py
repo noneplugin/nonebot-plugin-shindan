@@ -67,13 +67,13 @@ async def make_shindan(id: int, name: str, mode="image") -> Union[str, bytes]:
         dom = BeautifulSoup(resp.text, "lxml")
         form = dom.find("form", {"id": "shindanForm"})
         _token = form.find("input", {"name": "_token"})["value"]  # type: ignore
-        shindan_token = form.find("input", {"name": "shindan_token"})["value"]  # type: ignore
+        # shindan_token = form.find("input", {"name": "shindan_token"})["value"]  # type: ignore
         payload = {
             "_token": _token,
             "user_input_value_1": name + seed,
             "randname": "名無しのR",
-            "type": "name",
-            "shindan_token": shindan_token,
+            "type": "name"
+            # "shindan_token": shindan_token,
         }
         resp = await post(client, url, json=payload)
 
