@@ -3,7 +3,6 @@ import traceback
 from typing import Optional
 
 from nonebot import get_driver, require
-from nonebot.adapters import Event
 from nonebot.log import logger
 from nonebot.matcher import Matcher
 from nonebot.permission import SUPERUSER
@@ -27,7 +26,7 @@ from nonebot_plugin_alconna import (
     on_alconna,
 )
 from nonebot_plugin_alconna.model import CompConfig
-from nonebot_plugin_uninfo import QryItrface
+from nonebot_plugin_uninfo import QryItrface, Uninfo
 
 from .config import Config
 from .manager import shindan_manager
@@ -145,8 +144,8 @@ async def _(matcher: Matcher, id: int, mode: str):
 
 def shindan_handler(shindan: ShindanConfig) -> T_Handler:
     async def handler(
-        event: Event,
         matcher: Matcher,
+        uninfo: Uninfo,
         interface: QryItrface,
         name: Optional[str] = None,
         at: Optional[At] = None,
@@ -154,7 +153,8 @@ def shindan_handler(shindan: ShindanConfig) -> T_Handler:
         if at and (user := await interface.get_user(at.target)):
             name = user.nick or user.name
 
-        if not name and (user := await interface.get_user(event.get_user_id())):
+        if not name:
+            user = uninfo.user
             name = user.nick or user.name
 
         if not name:
