@@ -33,7 +33,8 @@ async def download_image(url: str) -> bytes:
 
 async def get_shindan_title(id: int) -> str:
     url = f"https://shindanmaker.com/{id}"
-    async with get_new_page(user_agent=USER_AGENT) as page:
+    async with get_new_page() as page:
+        await page.set_extra_http_headers(headers=headers)
         await page.goto(url, wait_until="commit")
         return await page.locator('//h1[@id="shindanTitle"]').inner_text()
 
@@ -41,7 +42,8 @@ async def get_shindan_title(id: int) -> str:
 async def make_shindan(id: int, name: str, mode="image") -> Union[str, bytes]:
     url = f"https://shindanmaker.com/{id}"
     seed = time.strftime("%y%m%d", time.localtime())
-    async with get_new_page(user_agent=USER_AGENT) as page:
+    async with get_new_page() as page:
+        await page.set_extra_http_headers(headers=headers)
         await page.goto(url, wait_until="commit")
         await page.locator('//input[@id="user_input_value_1"]').fill(name + seed)
         await page.locator('//button[@id="shindanButtonSubmit"]').click()
